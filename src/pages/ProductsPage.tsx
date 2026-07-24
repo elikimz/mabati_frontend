@@ -1,546 +1,696 @@
-import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
-  Filter,
-  MessageCircle,
-  Package,
   Search,
-  SlidersHorizontal,
+  Filter,
   X,
-  ChevronRight,
-  Grid3X3,
+  Grid3x3,
   List,
   ArrowRight,
+  MessageCircle,
 } from "lucide-react";
-import {
-  categoriesApi,
-  formatPriceRange,
-  generateOrderMessage,
-  generateWhatsAppUrl,
-  getPrimaryImage,
-  productsApi,
-} from "../lib/api";
-import type { Product, ProductFilters } from "../types";
+import { useQuery } from "@tanstack/react-query";
+import { productsApi, categoriesApi } from "../lib/api";
+import { cn } from "../lib/utils";
+import { useTheme } from "../contexts/ThemeContext";
 
 const WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "254788873611";
 
-const GAUGES = ["28G", "30G", "32G", "0.3mm", "0.4mm", "0.47mm", "0.55mm"];
-const COLORS = ["Charcoal", "Red", "Green", "Blue", "Brown", "Silver", "White", "Black"];
+type ViewMode = "grid" | "list";
 
-// ─── Premium Product Card (Grid) ──────────────────────────────────────────────
-const ProductCardGrid: React.FC<{ product: Product }> = ({ product }) => {
-  const imgSrc = getPrimaryImage(product);
-  const waUrl = generateWhatsAppUrl(
-    WHATSAPP,
-    `Hello MRM Mabati Rolling Mills, I would like to enquire about ${product.name}.`
-  );
-  const isOutOfStock = !product.is_available || product.stock_quantity === 0;
-  const isLowStock = !isOutOfStock && product.stock_quantity <= product.low_stock_threshold;
-
-  return (
-    <div className="group bg-white rounded-3xl border border-[#dde3f0] overflow-hidden hover:shadow-2xl hover:shadow-[#2952a3]/8 hover:-translate-y-1 transition-all duration-300">
-      {/* Image */}
-      <div className="relative overflow-hidden bg-[#f0f3f9]" style={{ aspectRatio: "4/3" }}>
-        <img
-          src={imgSrc}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-        />
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-          {product.is_featured && (
-            <span className="px-2.5 py-1 bg-[#d4a017] text-white text-xs font-bold rounded-full shadow-lg">
-              Featured
-            </span>
-          )}
-          {isOutOfStock && (
-            <span className="px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg">
-              Out of Stock
-            </span>
-          )}
-          {isLowStock && (
-            <span className="px-2.5 py-1 bg-amber-500 text-white text-xs font-bold rounded-full shadow-lg">
-              Low Stock
-            </span>
-          )}
-        </div>
-        {/* Image count */}
-        {product.images && product.images.length > 1 && (
-          <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/60 text-white text-xs rounded-full backdrop-blur-sm">
-            +{product.images.length - 1} photos
-          </div>
-        )}
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-          <Link
-            to={`/products/${product.slug || product.id}`}
-            className="px-5 py-2 bg-white text-[#0a1628] text-sm font-bold rounded-xl hover:bg-[#f0f3f9] transition-colors"
-          >
-            View Details
-          </Link>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-5">
-        {product.category && (
-          <div className="text-xs font-bold text-[#2952a3] uppercase tracking-wider mb-1">
-            {product.category.name}
-          </div>
-        )}
-        <h3 className="font-bold text-[#0a1628] text-base mb-2 line-clamp-2 group-hover:text-[#2952a3] transition-colors">
-          {product.name}
-        </h3>
-
-        {/* Specs chips */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {product.gauge && (
-            <span className="px-2 py-0.5 bg-[#f0f3f9] text-[#3d4663] text-xs rounded-full font-medium border border-[#dde3f0]">
-              {product.gauge}
-            </span>
-          )}
-          {product.color && (
-            <span className="px-2 py-0.5 bg-[#f0f3f9] text-[#3d4663] text-xs rounded-full font-medium border border-[#dde3f0]">
-              {product.color}
-            </span>
-          )}
-          {product.material && (
-            <span className="px-2 py-0.5 bg-[#f0f3f9] text-[#3d4663] text-xs rounded-full font-medium border border-[#dde3f0]">
-              {product.material}
-            </span>
-          )}
-        </div>
-
-        {/* Price */}
-        <div className="mb-4">
-          <div className="text-xs text-[#6b7a9e] mb-0.5">
-            {product.price_to ? "Price range" : "Starting from"}
-          </div>
-          <div className="text-lg font-black text-[#0a1628]">
-            {formatPriceRange(product)}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <Link
-            to={`/products/${product.slug || product.id}`}
-            className="flex-1 text-center px-3 py-2.5 bg-[#0a1628] text-white text-sm font-semibold rounded-xl hover:bg-[#152b55] transition-colors"
-          >
-            View Details
-          </Link>
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center w-10 h-10 bg-[#25D366] text-white rounded-xl hover:bg-[#1da851] transition-colors shrink-0"
-            title="Order on WhatsApp"
-          >
-            <MessageCircle size={16} />
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── Product Card (List) ──────────────────────────────────────────────────────
-const ProductCardList: React.FC<{ product: Product }> = ({ product }) => {
-  const imgSrc = getPrimaryImage(product);
-  const waUrl = generateWhatsAppUrl(
-    WHATSAPP,
-    `Hello MRM Mabati Rolling Mills, I would like to enquire about ${product.name}.`
-  );
-
-  return (
-    <div className="group bg-white rounded-2xl border border-[#dde3f0] overflow-hidden hover:shadow-xl hover:shadow-[#2952a3]/5 transition-all duration-300 flex">
-      <div className="w-40 sm:w-52 shrink-0 overflow-hidden bg-[#f0f3f9]">
-        <img
-          src={imgSrc}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-      </div>
-      <div className="flex-1 p-5 flex flex-col justify-between">
-        <div>
-          {product.category && (
-            <div className="text-xs font-bold text-[#2952a3] uppercase tracking-wider mb-1">
-              {product.category.name}
-            </div>
-          )}
-          <h3 className="font-bold text-[#0a1628] text-lg mb-2 group-hover:text-[#2952a3] transition-colors">
-            {product.name}
-          </h3>
-          {product.description && (
-            <p className="text-[#6b7a9e] text-sm leading-relaxed mb-3 line-clamp-2">{product.description}</p>
-          )}
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {product.gauge && <span className="px-2 py-0.5 bg-[#f0f3f9] text-[#3d4663] text-xs rounded-full font-medium border border-[#dde3f0]">{product.gauge}</span>}
-            {product.color && <span className="px-2 py-0.5 bg-[#f0f3f9] text-[#3d4663] text-xs rounded-full font-medium border border-[#dde3f0]">{product.color}</span>}
-            {product.material && <span className="px-2 py-0.5 bg-[#f0f3f9] text-[#3d4663] text-xs rounded-full font-medium border border-[#dde3f0]">{product.material}</span>}
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs text-[#6b7a9e]">{product.price_to ? "Price range" : "Starting from"}</div>
-            <div className="text-xl font-black text-[#0a1628]">{formatPriceRange(product)}</div>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              to={`/products/${product.slug || product.id}`}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#0a1628] text-white text-sm font-semibold rounded-xl hover:bg-[#152b55] transition-colors"
-            >
-              Details <ChevronRight size={14} />
-            </Link>
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center w-9 h-9 bg-[#25D366] text-white rounded-xl hover:bg-[#1da851] transition-colors"
-            >
-              <MessageCircle size={15} />
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── Filters Sidebar ──────────────────────────────────────────────────────────
-interface FiltersProps {
-  filters: ProductFilters;
-  onChange: (f: ProductFilters) => void;
-  onClose?: () => void;
+interface Filters {
+  search: string;
+  category: string | null;
+  gauge: string | null;
+  color: string | null;
+  priceRange: [number, number];
+  inStock: boolean | null;
 }
 
-const FiltersSidebar: React.FC<FiltersProps> = ({ filters, onChange, onClose }) => {
-  const { data: categories } = useQuery({
+export default function ProductsPage() {
+  const { theme } = useTheme();
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<Filters>({
+    search: "",
+    category: null,
+    gauge: null,
+    color: null,
+    priceRange: [0, 100000],
+    inStock: null,
+  });
+
+  // Fetch data
+  const { data: products = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => productsApi.getAll(),
+  });
+
+  const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
-    queryFn: categoriesApi.list,
+    queryFn: () => categoriesApi.getAll(),
   });
 
-  const set = (key: keyof ProductFilters, value: unknown) =>
-    onChange({ ...filters, [key]: value || undefined });
-
-  const activeCount = Object.values(filters).filter(Boolean).length;
-
-  return (
-    <div className="bg-white rounded-2xl border border-[#dde3f0] p-6 space-y-6 sticky top-24">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-[#0a1628] flex items-center gap-2">
-          <Filter size={16} />
-          Filters
-          {activeCount > 0 && (
-            <span className="w-5 h-5 bg-[#2952a3] text-white text-xs rounded-full flex items-center justify-center font-bold">
-              {activeCount}
-            </span>
-          )}
-        </h3>
-        {onClose && (
-          <button onClick={onClose} className="text-[#6b7a9e] hover:text-[#0a1628]">
-            <X size={18} />
-          </button>
-        )}
-      </div>
-
-      {/* Category */}
-      <div>
-        <label className="text-xs font-bold text-[#6b7a9e] uppercase tracking-wider mb-3 block">Category</label>
-        <div className="space-y-1">
-          <button
-            onClick={() => set("category_id", undefined)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${!filters.category_id ? "bg-[#2952a3] text-white font-semibold" : "text-[#3d4663] hover:bg-[#f0f3f9]"}`}
-          >
-            All Categories
-          </button>
-          {categories?.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => set("category_id", filters.category_id === c.id ? undefined : c.id)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${filters.category_id === c.id ? "bg-[#2952a3] text-white font-semibold" : "text-[#3d4663] hover:bg-[#f0f3f9]"}`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Gauge */}
-      <div>
-        <label className="text-xs font-bold text-[#6b7a9e] uppercase tracking-wider mb-3 block">Gauge</label>
-        <div className="flex flex-wrap gap-2">
-          {GAUGES.map((g) => (
-            <button
-              key={g}
-              onClick={() => set("gauge", filters.gauge === g ? undefined : g)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                filters.gauge === g
-                  ? "bg-[#2952a3] text-white border-[#2952a3]"
-                  : "bg-white text-[#3d4663] border-[#dde3f0] hover:border-[#2952a3]"
-              }`}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Color */}
-      <div>
-        <label className="text-xs font-bold text-[#6b7a9e] uppercase tracking-wider mb-3 block">Color</label>
-        <div className="flex flex-wrap gap-2">
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => set("color", filters.color === c ? undefined : c)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                filters.color === c
-                  ? "bg-[#2952a3] text-white border-[#2952a3]"
-                  : "bg-white text-[#3d4663] border-[#dde3f0] hover:border-[#2952a3]"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Price range */}
-      <div>
-        <label className="text-xs font-bold text-[#6b7a9e] uppercase tracking-wider mb-3 block">Price Range (KES)</label>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            placeholder="Min"
-            value={filters.min_price || ""}
-            onChange={(e) => set("min_price", e.target.value ? Number(e.target.value) : undefined)}
-            className="flex-1 px-3 py-2 border border-[#dde3f0] rounded-lg text-sm focus:outline-none focus:border-[#2952a3]"
-          />
-          <input
-            type="number"
-            placeholder="Max"
-            value={filters.max_price || ""}
-            onChange={(e) => set("max_price", e.target.value ? Number(e.target.value) : undefined)}
-            className="flex-1 px-3 py-2 border border-[#dde3f0] rounded-lg text-sm focus:outline-none focus:border-[#2952a3]"
-          />
-        </div>
-      </div>
-
-      {/* Availability */}
-      <div>
-        <label className="text-xs font-bold text-[#6b7a9e] uppercase tracking-wider mb-3 block">Availability</label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={filters.in_stock === true}
-            onChange={(e) => set("in_stock", e.target.checked ? true : undefined)}
-            className="w-4 h-4 rounded border-[#dde3f0] text-[#2952a3] accent-[#2952a3]"
-          />
-          <span className="text-sm text-[#3d4663] font-medium">In Stock Only</span>
-        </label>
-      </div>
-
-      {/* Reset */}
-      {activeCount > 0 && (
-        <button
-          onClick={() => onChange({})}
-          className="w-full px-4 py-2.5 border border-[#dde3f0] text-[#6b7a9e] text-sm font-semibold rounded-xl hover:bg-[#f0f3f9] transition-colors"
-        >
-          Clear All Filters
-        </button>
-      )}
-    </div>
+  // Extract unique values for filters
+  const uniqueGauges = useMemo(
+    () => [...new Set(products.map((p) => p.gauge).filter(Boolean))],
+    [products]
   );
-};
+  const uniqueColors = useMemo(
+    () => [...new Set(products.map((p) => p.color).filter(Boolean))],
+    [products]
+  );
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-const ProductsPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const [filters, setFilters] = useState<ProductFilters>({});
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  // Filter products
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      // Search
+      if (
+        filters.search &&
+        !product.name.toLowerCase().includes(filters.search.toLowerCase())
+      ) {
+        return false;
+      }
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products", filters, search],
-    queryFn: () => productsApi.list({ ...filters, search: search || undefined }),
-  });
+      // Category
+      if (filters.category && product.category_id !== parseInt(filters.category)) {
+        return false;
+      }
+
+      // Gauge
+      if (filters.gauge && product.gauge !== filters.gauge) {
+        return false;
+      }
+
+      // Color
+      if (filters.color && product.color !== filters.color) {
+        return false;
+      }
+
+      // Price range
+      if (
+        product.price < filters.priceRange[0] ||
+        product.price > filters.priceRange[1]
+      ) {
+        return false;
+      }
+
+      // In stock
+      if (filters.inStock === true && product.stock === 0) {
+        return false;
+      }
+      if (filters.inStock === false && product.stock > 0) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [products, filters]);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
-      {/* Premium Page Header */}
-      <div className="bg-[#0a1628] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <img
-            src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80"
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1628] via-[#0a1628]/90 to-transparent" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2952a3]/30 text-[#4d79ff] text-xs font-bold uppercase tracking-widest mb-4">
+    <div className={cn(theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
+      {/* Hero Section */}
+      <section className={cn(
+        "relative py-20 border-b",
+        theme === "dark"
+          ? "bg-gradient-to-r from-[#0a1628] via-[#152b55] to-[#2952a3] border-white/5"
+          : "bg-gradient-to-r from-[#2952a3] via-[#1e3d7a] to-[#152b55]"
+      )}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4">
             Our Products
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-3 tracking-tight">
-            Premium Roofing Materials
           </h1>
-          <p className="text-[#8e9bbf] text-lg max-w-xl">
-            Browse our complete range of high-quality mabati sheets, gutters, ridge caps and roofing accessories.
+          <p className="text-xl text-white/90 max-w-2xl mx-auto">
+            Premium roofing materials for every project and budget
           </p>
-          <div className="flex flex-wrap gap-4 mt-6">
-            {[
-              { label: "500+ Products", icon: <Package size={14} /> },
-              { label: "All Gauges Available", icon: <ChevronRight size={14} /> },
-              { label: "WhatsApp Ordering", icon: <MessageCircle size={14} /> },
-            ].map((badge) => (
-              <div key={badge.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-medium border border-white/10">
-                <span className="text-[#d4a017]">{badge.icon}</span>
-                {badge.label}
-              </div>
-            ))}
-          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {/* Search + Controls bar */}
-        <div className="flex gap-3 mb-8">
-          <div className="relative flex-1">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7a9e]" />
-            <input
-              type="text"
-              placeholder="Search products, brands, materials..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3.5 bg-white border border-[#dde3f0] rounded-xl text-sm focus:outline-none focus:border-[#2952a3] focus:ring-2 focus:ring-[#2952a3]/20 shadow-sm"
-            />
-          </div>
-          {/* View mode toggle */}
-          <div className="hidden sm:flex items-center bg-white border border-[#dde3f0] rounded-xl overflow-hidden shadow-sm">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-3 transition-colors ${viewMode === "grid" ? "bg-[#2952a3] text-white" : "text-[#6b7a9e] hover:bg-[#f0f3f9]"}`}
-            >
-              <Grid3X3 size={18} />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-3 transition-colors ${viewMode === "list" ? "bg-[#2952a3] text-white" : "text-[#6b7a9e] hover:bg-[#f0f3f9]"}`}
-            >
-              <List size={18} />
-            </button>
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="lg:hidden flex items-center gap-2 px-4 py-3 bg-white border border-[#dde3f0] rounded-xl text-sm font-semibold text-[#3d4663] hover:bg-[#f0f3f9] shadow-sm"
-          >
-            <SlidersHorizontal size={16} />
-            Filters
-          </button>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Filters Sidebar */}
+          <div className={cn(
+            "lg:col-span-1",
+            mobileFilterOpen ? "block" : "hidden lg:block"
+          )}>
+            <div className={cn(
+              "rounded-2xl p-6 sticky top-24 space-y-6",
+              theme === "dark"
+                ? "bg-[#0a1628] border border-white/10"
+                : "bg-[#f8fafc] border border-[#dde3f0]"
+            )}>
+              {/* Close button for mobile */}
+              <button
+                onClick={() => setMobileFilterOpen(false)}
+                className="lg:hidden absolute top-4 right-4"
+              >
+                <X size={20} className={theme === "dark" ? "text-white" : "text-[#0a1628]"} />
+              </button>
 
-        <div className="flex gap-8">
-          {/* Desktop sidebar */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <FiltersSidebar filters={filters} onChange={setFilters} />
-          </aside>
+              <h3 className={cn(
+                "text-lg font-bold",
+                theme === "dark" ? "text-white" : "text-[#0a1628]"
+              )}>
+                Filters
+              </h3>
 
-          {/* Mobile filters drawer */}
-          {showFilters && (
-            <div className="lg:hidden fixed inset-0 z-50 flex">
-              <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilters(false)} />
-              <div className="relative ml-auto w-80 bg-white h-full overflow-y-auto p-4 shadow-2xl">
-                <FiltersSidebar filters={filters} onChange={setFilters} onClose={() => setShowFilters(false)} />
+              {/* Search */}
+              <div>
+                <label className={cn(
+                  "text-sm font-semibold mb-2 block",
+                  theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]"
+                )}>
+                  Search Products
+                </label>
+                <div className={cn(
+                  "relative",
+                  theme === "dark" ? "bg-white/10" : "bg-white"
+                )}>
+                  <Search size={16} className={cn(
+                    "absolute left-3 top-1/2 -translate-y-1/2",
+                    theme === "dark" ? "text-[#6b7a9e]" : "text-[#6b7a9e]"
+                  )} />
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={filters.search}
+                    onChange={(e) =>
+                      setFilters({ ...filters, search: e.target.value })
+                    }
+                    className={cn(
+                      "w-full pl-10 pr-4 py-2 rounded-lg text-sm border transition-colors",
+                      theme === "dark"
+                        ? "bg-white/10 border-white/10 text-white placeholder-[#6b7a9e] focus:border-white/20 focus:outline-none"
+                        : "bg-white border-[#dde3f0] text-[#0a1628] placeholder-[#6b7a9e] focus:border-[#2952a3] focus:outline-none"
+                    )}
+                  />
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* Products area */}
-          <div className="flex-1 min-w-0">
-            {/* Results count */}
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-sm text-[#6b7a9e]">
-                {isLoading ? "Loading..." : (
-                  <span>
-                    <span className="font-bold text-[#0a1628]">{products?.length || 0}</span> products found
-                  </span>
-                )}
-              </p>
-              {Object.values(filters).some(Boolean) && (
-                <button
-                  onClick={() => setFilters({})}
-                  className="text-xs text-[#2952a3] font-semibold hover:underline flex items-center gap-1"
+              {/* Category */}
+              <div>
+                <label className={cn(
+                  "text-sm font-semibold mb-2 block",
+                  theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]"
+                )}>
+                  Category
+                </label>
+                <select
+                  value={filters.category || ""}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      category: e.target.value ? e.target.value : null,
+                    })
+                  }
+                  className={cn(
+                    "w-full px-4 py-2 rounded-lg text-sm border transition-colors",
+                    theme === "dark"
+                      ? "bg-white/10 border-white/10 text-white focus:border-white/20 focus:outline-none"
+                      : "bg-white border-[#dde3f0] text-[#0a1628] focus:border-[#2952a3] focus:outline-none"
+                  )}
                 >
-                  <X size={12} /> Clear filters
+                  <option value="">All Categories</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Gauge */}
+              {uniqueGauges.length > 0 && (
+                <div>
+                  <label className={cn(
+                    "text-sm font-semibold mb-2 block",
+                    theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]"
+                  )}>
+                    Gauge
+                  </label>
+                  <select
+                    value={filters.gauge || ""}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        gauge: e.target.value ? e.target.value : null,
+                      })
+                    }
+                    className={cn(
+                      "w-full px-4 py-2 rounded-lg text-sm border transition-colors",
+                      theme === "dark"
+                        ? "bg-white/10 border-white/10 text-white focus:border-white/20 focus:outline-none"
+                        : "bg-white border-[#dde3f0] text-[#0a1628] focus:border-[#2952a3] focus:outline-none"
+                    )}
+                  >
+                    <option value="">All Gauges</option>
+                    {uniqueGauges.map((gauge) => (
+                      <option key={gauge} value={gauge}>
+                        {gauge}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Color */}
+              {uniqueColors.length > 0 && (
+                <div>
+                  <label className={cn(
+                    "text-sm font-semibold mb-2 block",
+                    theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]"
+                  )}>
+                    Color
+                  </label>
+                  <select
+                    value={filters.color || ""}
+                    onChange={(e) =>
+                      setFilters({
+                        ...filters,
+                        color: e.target.value ? e.target.value : null,
+                      })
+                    }
+                    className={cn(
+                      "w-full px-4 py-2 rounded-lg text-sm border transition-colors",
+                      theme === "dark"
+                        ? "bg-white/10 border-white/10 text-white focus:border-white/20 focus:outline-none"
+                        : "bg-white border-[#dde3f0] text-[#0a1628] focus:border-[#2952a3] focus:outline-none"
+                    )}
+                  >
+                    <option value="">All Colors</option>
+                    {uniqueColors.map((color) => (
+                      <option key={color} value={color}>
+                        {color}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Stock Status */}
+              <div>
+                <label className={cn(
+                  "text-sm font-semibold mb-3 block",
+                  theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]"
+                )}>
+                  Availability
+                </label>
+                <div className="space-y-2">
+                  {[
+                    { value: null, label: "All Products" },
+                    { value: true, label: "In Stock Only" },
+                    { value: false, label: "Out of Stock" },
+                  ].map((option) => (
+                    <label key={String(option.value)} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="stock"
+                        checked={filters.inStock === option.value}
+                        onChange={() =>
+                          setFilters({ ...filters, inStock: option.value })
+                        }
+                        className="w-4 h-4"
+                      />
+                      <span className={cn(
+                        "text-sm",
+                        theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]"
+                      )}>
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              {(filters.search ||
+                filters.category ||
+                filters.gauge ||
+                filters.color ||
+                filters.inStock !== null) && (
+                <button
+                  onClick={() =>
+                    setFilters({
+                      search: "",
+                      category: null,
+                      gauge: null,
+                      color: null,
+                      priceRange: [0, 100000],
+                      inStock: null,
+                    })
+                  }
+                  className={cn(
+                    "w-full py-2 rounded-lg text-sm font-semibold transition-colors",
+                    theme === "dark"
+                      ? "bg-white/10 text-white hover:bg-white/20"
+                      : "bg-[#f0f3f9] text-[#0a1628] hover:bg-[#e2e8f0]"
+                  )}
+                >
+                  Clear Filters
                 </button>
               )}
             </div>
+          </div>
 
-            {isLoading ? (
-              <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className={`bg-white rounded-2xl animate-pulse border border-[#dde3f0] ${viewMode === "grid" ? "h-80" : "h-36"}`} />
-                ))}
+          {/* Products Grid */}
+          <div className="lg:col-span-3">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className={cn(
+                  "text-2xl font-bold",
+                  theme === "dark" ? "text-white" : "text-[#0a1628]"
+                )}>
+                  {filteredProducts.length} Products
+                </h2>
+                <p className={cn(
+                  "text-sm",
+                  theme === "dark" ? "text-[#6b7a9e]" : "text-[#6b7a9e]"
+                )}>
+                  {filteredProducts.length === products.length
+                    ? "Showing all products"
+                    : `Filtered from ${products.length} total`}
+                </p>
               </div>
-            ) : products && products.length > 0 ? (
-              viewMode === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {products.map((product) => (
-                    <ProductCardGrid key={product.id} product={product} />
-                  ))}
+
+              <div className="flex items-center gap-3">
+                {/* View Mode Toggle */}
+                <div className={cn(
+                  "flex items-center gap-2 p-1 rounded-lg",
+                  theme === "dark" ? "bg-white/10" : "bg-[#f0f3f9]"
+                )}>
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "p-2 rounded transition-colors",
+                      viewMode === "grid"
+                        ? theme === "dark"
+                          ? "bg-white/20 text-white"
+                          : "bg-white text-[#0a1628]"
+                        : theme === "dark"
+                          ? "text-[#6b7a9e]"
+                          : "text-[#6b7a9e]"
+                    )}
+                  >
+                    <Grid3x3 size={18} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "p-2 rounded transition-colors",
+                      viewMode === "list"
+                        ? theme === "dark"
+                          ? "bg-white/20 text-white"
+                          : "bg-white text-[#0a1628]"
+                        : theme === "dark"
+                          ? "text-[#6b7a9e]"
+                          : "text-[#6b7a9e]"
+                    )}
+                  >
+                    <List size={18} />
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {products.map((product) => (
-                    <ProductCardList key={product.id} product={product} />
-                  ))}
-                </div>
-              )
-            ) : (
-              <div className="text-center py-24 bg-white rounded-3xl border border-[#dde3f0]">
-                <div className="w-20 h-20 bg-[#f0f3f9] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Package size={36} className="text-[#dde3f0]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#0a1628] mb-2">No products found</h3>
-                <p className="text-[#6b7a9e] text-sm mb-6 max-w-sm mx-auto">
-                  Try adjusting your search or filters to find what you're looking for.
+
+                {/* Mobile Filter Button */}
+                <button
+                  onClick={() => setMobileFilterOpen(true)}
+                  className={cn(
+                    "lg:hidden flex items-center gap-2 px-4 py-2 rounded-lg transition-colors",
+                    theme === "dark"
+                      ? "bg-white/10 text-white hover:bg-white/20"
+                      : "bg-[#f0f3f9] text-[#0a1628] hover:bg-[#e2e8f0]"
+                  )}
+                >
+                  <Filter size={18} />
+                  Filters
+                </button>
+              </div>
+            </div>
+
+            {/* Products Display */}
+            {filteredProducts.length === 0 ? (
+              <div className={cn(
+                "text-center py-20 rounded-2xl border-2 border-dashed",
+                theme === "dark"
+                  ? "bg-white/5 border-white/10"
+                  : "bg-[#f8fafc] border-[#dde3f0]"
+              )}>
+                <div className="text-4xl mb-4">🔍</div>
+                <h3 className={cn(
+                  "text-xl font-bold mb-2",
+                  theme === "dark" ? "text-white" : "text-[#0a1628]"
+                )}>
+                  No Products Found
+                </h3>
+                <p className={cn(
+                  "mb-6",
+                  theme === "dark" ? "text-[#6b7a9e]" : "text-[#6b7a9e]"
+                )}>
+                  Try adjusting your filters or search terms
                 </p>
                 <button
-                  onClick={() => { setFilters({}); setSearch(""); }}
-                  className="px-6 py-3 bg-[#2952a3] text-white rounded-xl text-sm font-semibold hover:bg-[#1e3d7a] transition-colors"
+                  onClick={() =>
+                    setFilters({
+                      search: "",
+                      category: null,
+                      gauge: null,
+                      color: null,
+                      priceRange: [0, 100000],
+                      inStock: null,
+                    })
+                  }
+                  className={cn(
+                    "px-6 py-2 rounded-lg font-semibold transition-colors",
+                    theme === "dark"
+                      ? "bg-[#2952a3] text-white hover:bg-[#1e3d7a]"
+                      : "bg-[#2952a3] text-white hover:bg-[#1e3d7a]"
+                  )}
                 >
                   Clear All Filters
                 </button>
               </div>
-            )}
+            ) : viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.slug || product.id}`}
+                    className={cn(
+                      "group relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-2xl",
+                      theme === "dark"
+                        ? "bg-[#152b55] hover:bg-[#1e3a6e]"
+                        : "bg-white hover:shadow-xl"
+                    )}
+                  >
+                    {/* Product Image */}
+                    <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/30">
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">📦</div>
+                            <div className="text-sm">No image</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-            {/* WhatsApp CTA */}
-            {products && products.length > 0 && (
-              <div className="mt-12 p-8 bg-[#0a1628] rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-xl font-black text-white mb-1">Can't find what you need?</h3>
-                  <p className="text-[#8e9bbf] text-sm">Contact us on WhatsApp and we'll help you find the right product.</p>
-                </div>
-                <a
-                  href={`https://wa.me/${WHATSAPP}?text=Hello MRM Mabati Rolling Mills, I need help finding a roofing product.`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-6 py-3 bg-[#25D366] text-white font-bold rounded-xl hover:bg-[#1ebe5d] transition-colors whitespace-nowrap"
-                >
-                  <MessageCircle size={18} />
-                  Chat on WhatsApp
-                  <ArrowRight size={16} />
-                </a>
+                    {/* Content */}
+                    <div className={cn(
+                      "p-6",
+                      theme === "dark" ? "bg-[#152b55]" : "bg-white"
+                    )}>
+                      <h3 className={cn(
+                        "font-bold text-lg mb-2 line-clamp-2",
+                        theme === "dark" ? "text-white" : "text-[#0a1628]"
+                      )}>
+                        {product.name}
+                      </h3>
+
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {product.gauge && (
+                          <span className={cn(
+                            "text-xs font-semibold px-3 py-1 rounded-full",
+                            theme === "dark"
+                              ? "bg-white/10 text-[#4d79ff]"
+                              : "bg-[#2952a3]/10 text-[#2952a3]"
+                          )}>
+                            {product.gauge}
+                          </span>
+                        )}
+                        {product.color && (
+                          <span className={cn(
+                            "text-xs font-semibold px-3 py-1 rounded-full",
+                            theme === "dark"
+                              ? "bg-white/10 text-[#f0c94a]"
+                              : "bg-[#d4a017]/10 text-[#d4a017]"
+                          )}>
+                            {product.color}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          {product.price && (
+                            <div className={cn(
+                              "text-sm font-semibold",
+                              theme === "dark" ? "text-[#8e9bbf]" : "text-[#6b7a9e]"
+                            )}>
+                              KES {product.price.toLocaleString()}
+                            </div>
+                          )}
+                          {product.stock > 0 ? (
+                            <div className="text-xs text-[#10b981] font-semibold mt-1">
+                              In Stock
+                            </div>
+                          ) : (
+                            <div className="text-xs text-[#ef4444] font-semibold mt-1">
+                              Out of Stock
+                            </div>
+                          )}
+                        </div>
+                        <ArrowRight size={18} className={cn(
+                          "transition-transform group-hover:translate-x-1",
+                          theme === "dark" ? "text-[#4d79ff]" : "text-[#2952a3]"
+                        )} />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredProducts.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.slug || product.id}`}
+                    className={cn(
+                      "group flex gap-6 p-6 rounded-2xl transition-all duration-300 hover:shadow-xl",
+                      theme === "dark"
+                        ? "bg-[#0a1628] border border-white/10 hover:border-white/20"
+                        : "bg-[#f8fafc] border border-[#dde3f0]"
+                    )}
+                  >
+                    {/* Image */}
+                    <div className="w-32 h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/30">
+                          📦
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className={cn(
+                          "font-bold text-lg mb-2",
+                          theme === "dark" ? "text-white" : "text-[#0a1628]"
+                        )}>
+                          {product.name}
+                        </h3>
+                        <p className={cn(
+                          "text-sm mb-3 line-clamp-2",
+                          theme === "dark" ? "text-[#6b7a9e]" : "text-[#6b7a9e]"
+                        )}>
+                          {product.description}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {product.gauge && (
+                            <span className={cn(
+                              "text-xs font-semibold px-3 py-1 rounded-full",
+                              theme === "dark"
+                                ? "bg-white/10 text-[#4d79ff]"
+                                : "bg-[#2952a3]/10 text-[#2952a3]"
+                            )}>
+                              {product.gauge}
+                            </span>
+                          )}
+                          {product.color && (
+                            <span className={cn(
+                              "text-xs font-semibold px-3 py-1 rounded-full",
+                              theme === "dark"
+                                ? "bg-white/10 text-[#f0c94a]"
+                                : "bg-[#d4a017]/10 text-[#d4a017]"
+                            )}>
+                              {product.color}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right side */}
+                    <div className="flex flex-col items-end justify-between">
+                      <div className="text-right">
+                        {product.price && (
+                          <div className={cn(
+                            "text-lg font-bold",
+                            theme === "dark" ? "text-white" : "text-[#0a1628]"
+                          )}>
+                            KES {product.price.toLocaleString()}
+                          </div>
+                        )}
+                        {product.stock > 0 ? (
+                          <div className="text-xs text-[#10b981] font-semibold mt-1">
+                            In Stock
+                          </div>
+                        ) : (
+                          <div className="text-xs text-[#ef4444] font-semibold mt-1">
+                            Out of Stock
+                          </div>
+                        )}
+                      </div>
+                      <ArrowRight size={20} className={cn(
+                        "transition-transform group-hover:translate-x-1",
+                        theme === "dark" ? "text-[#4d79ff]" : "text-[#2952a3]"
+                      )} />
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* CTA Section */}
+      <section className={cn(
+        "py-20 border-t mt-12",
+        theme === "dark"
+          ? "bg-gradient-to-r from-[#0a1628] via-[#152b55] to-[#2952a3] border-white/5"
+          : "bg-gradient-to-r from-[#2952a3] via-[#1e3d7a] to-[#152b55]"
+      )}>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+            Can't Find What You Need?
+          </h2>
+          <p className="text-xl text-white/90 mb-8">
+            Contact our experts for custom solutions and bulk orders
+          </p>
+          <a
+            href={`https://wa.me/${WHATSAPP}?text=Hello MRM Mabati Rolling Mills, I would like to enquire about custom roofing solutions.`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-[#25D366] text-white font-bold rounded-2xl hover:bg-[#1ebe5d] transition-colors shadow-xl shadow-[#25D366]/30 text-lg"
+          >
+            <MessageCircle size={20} />
+            Chat on WhatsApp
+          </a>
+        </div>
+      </section>
     </div>
   );
-};
-
-export default ProductsPage;
+}

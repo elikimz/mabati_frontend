@@ -19,12 +19,14 @@ import {
   getPrimaryImage,
   productsApi,
 } from "../lib/api";
+import { cn } from "../lib/utils";
+import { useTheme } from "../contexts/ThemeContext";
 import type { Product } from "../types";
 
 const WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "254788873611";
 
 // ─── Image Gallery ────────────────────────────────────────────────────────────
-const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
+const ImageGallery: React.FC<{ product: Product; theme: string }> = ({ product, theme }) => {
   const allImages = [
     ...(product.images || []),
     ...(product.image_url && !product.images?.find((i) => i.image_url === product.image_url)
@@ -252,6 +254,7 @@ const RelatedProducts: React.FC<{ productId: number }> = ({ productId }) => {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const ProductDetailPage: React.FC = () => {
+  const { theme } = useTheme();
   const { id } = useParams<{ id: string }>();
 
   // Determine if the param is a numeric ID or a slug string
@@ -325,7 +328,7 @@ const ProductDetailPage: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Left: Image Gallery */}
-          <ImageGallery product={product} />
+          <ImageGallery product={product} theme={theme} />
 
           {/* Right: Product Info */}
           <div>
