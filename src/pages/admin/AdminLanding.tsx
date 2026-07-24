@@ -111,12 +111,14 @@ const AdminLanding: React.FC = () => {
 
   const moveBanner = (id: number, direction: "up" | "down") => {
     const index = banners?.findIndex((b: any) => b.id === id);
+    if (!banners) return; // Add null check for banners
     if (index === undefined || index === -1) return;
 
     const newIndex = direction === "up" ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= (banners?.length || 0)) return;
 
     const otherBanner = banners[newIndex];
+    if (!banners[index]) return; // Add null check for banners[index]
     
     // Swap display orders
     updateMutation.mutate({ 

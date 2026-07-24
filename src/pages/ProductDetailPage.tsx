@@ -21,7 +21,7 @@ import {
 } from "../lib/api";
 import type { Product } from "../types";
 
-const WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "254700000000";
+const WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "254788873611";
 
 // ─── Image Gallery ────────────────────────────────────────────────────────────
 const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
@@ -227,7 +227,7 @@ const RelatedProducts: React.FC<{ productId: number }> = ({ productId }) => {
         {related.map((product) => (
           <Link
             key={product.id}
-            to={`/products/${product.id}`}
+            to={`/products/${product.slug || product.id}`}
             className="bg-white rounded-2xl border border-[#dde3f0] overflow-hidden hover:shadow-lg hover:border-[#2952a3]/20 transition-all group"
           >
             <div className="h-40 overflow-hidden bg-[#f0f3f9]">
@@ -253,12 +253,18 @@ const RelatedProducts: React.FC<{ productId: number }> = ({ productId }) => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const productId = Number(id);
+
+  // Determine if the param is a numeric ID or a slug string
+  const isNumericId = id ? /^\d+$/.test(id) : false;
 
   const { data: product, isLoading, error } = useQuery({
-    queryKey: ["product", productId],
-    queryFn: () => productsApi.get(productId),
-    enabled: !!productId,
+    queryKey: ["product", id],
+    queryFn: () => {
+      if (!id) throw new Error("No product identifier provided");
+      return isNumericId ? productsApi.get(Number(id)) : productsApi.getBySlug(id);
+    },
+    enabled: !!id,
+    retry: 1,
   });
 
   if (isLoading) {
@@ -417,7 +423,7 @@ const ProductDetailPage: React.FC = () => {
         </div>
 
         {/* Related products */}
-        <RelatedProducts productId={productId} />
+        <RelatedProducts productId={product.id} />
       </div>
     </div>
   );
