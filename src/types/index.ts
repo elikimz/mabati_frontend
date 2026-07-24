@@ -55,6 +55,8 @@ export interface ProductImageCreate {
 
 // ─── Product ──────────────────────────────────────────────────────────────────
 export interface Product {
+  stock: number;
+  price: import("react").JSX.Element;
   id: number;
   name: string;
   slug?: string;

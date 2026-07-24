@@ -25,12 +25,12 @@ export default function HomePage() {
   // Fetch banners and products
   const { data: banners = [] } = useQuery({
     queryKey: ["banners"],
-    queryFn: () => bannersApi.getAll(),
+    queryFn: () => bannersApi.list(),
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: () => productsApi.getAll(),
+    queryFn: () => productsApi.list(),
   });
 
   const bestSellers = products.slice(0, 6);
@@ -288,7 +288,7 @@ export default function HomePage() {
                 <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
                   {product.images && product.images.length > 0 ? (
                     <img
-                      src={product.images[0]}
+                      src={typeof product.images[0] === "string" ? product.images[0] : (product.images[0] as any)?.url || ""}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />

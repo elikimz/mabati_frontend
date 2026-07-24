@@ -27,6 +27,17 @@ interface Filters {
   inStock: boolean | null;
 }
 
+const getImageSrc = (image: unknown): string => {
+  if (typeof image === "string") return image;
+  if (image && typeof image === "object") {
+    const candidate = image as Record<string, unknown>;
+    if (typeof candidate.url === "string") return candidate.url;
+    if (typeof candidate.image_url === "string") return candidate.image_url;
+    if (typeof candidate.src === "string") return candidate.src;
+  }
+  return "";
+};
+
 export default function ProductsPage() {
   const { theme } = useTheme();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -43,12 +54,12 @@ export default function ProductsPage() {
   // Fetch data
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
-    queryFn: () => productsApi.getAll(),
+    queryFn: () => productsApi.list(),
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
-    queryFn: () => categoriesApi.getAll(),
+    queryFn: () => categoriesApi.list(),
   });
 
   // Extract unique values for filters
@@ -88,10 +99,11 @@ export default function ProductsPage() {
       }
 
       // Price range
-      if (
-        product.price < filters.priceRange[0] ||
-        product.price > filters.priceRange[1]
-      ) {
+      const productPrice = Number(product.price);
+      if (!Number.isFinite(productPrice)) {
+        return false;
+      }
+      if (productPrice < filters.priceRange[0] || productPrice > filters.priceRange[1]) {
         return false;
       }
 
@@ -486,7 +498,7 @@ export default function ProductsPage() {
                     <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
                       {product.images && product.images.length > 0 ? (
                         <img
-                          src={product.images[0]}
+                          src={getImageSrc(product.images[0])}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
@@ -581,7 +593,7 @@ export default function ProductsPage() {
                     <div className="w-32 h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
                       {product.images && product.images.length > 0 ? (
                         <img
-                          src={product.images[0]}
+                          src={getImageSrc(product.images[0])}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
