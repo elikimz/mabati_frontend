@@ -1,75 +1,157 @@
-# React + TypeScript + Vite
+# Mabati Rolling Mills — Premium Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A production-ready React + TypeScript storefront and admin dashboard for the Mabati roofing products platform.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
 
-## React Compiler
+| Layer | Technology |
+|---|---|
+| Framework | React 19 + TypeScript |
+| Build Tool | Vite 8 |
+| Styling | Tailwind CSS v4 |
+| Routing | React Router v7 |
+| Data Fetching | TanStack Query v5 |
+| State Management | Zustand (auth) |
+| HTTP Client | Axios |
+| Icons | Lucide React |
+| Image Uploads | Cloudinary (unsigned upload preset) |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Public Storefront
+- **Premium landing page** with hero section, features, product showcase, and WhatsApp CTA
+- **Products catalogue** with search, category filter, color/gauge/price filters
+- **Product detail page** with WhatsApp order button generating a pre-filled message
+- **Authentication** — login and registration pages with JWT token management and auto-refresh
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Admin Dashboard (`/admin`)
+| Module | Description |
+|---|---|
+| Dashboard | KPI cards (products, orders, revenue, customers) + low-stock alerts |
+| Products | Full CRUD with Cloudinary image upload, category assignment, pricing |
+| Categories | Create, edit, delete product categories |
+| Inventory | Adjust stock levels per product, view adjustment history logs |
+| Orders | View all orders, filter by status, update order status inline |
+| Landing Page | CMS-style editor for hero image, headline, banners, WhatsApp number |
+| Users | View all registered users with role and status |
+| Settings | Profile info + change password |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
 
+### Prerequisites
+- Node.js 18+
+- pnpm (`npm i -g pnpm`)
+- Backend API running (see mabatiAPI)
+
+### Installation
+
+```bash
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Copy `.env.example` to `.env` and fill in your values:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
+```
+
+| Variable | Description | Example |
+|---|---|---|
+| `VITE_API_URL` | Backend API base URL | `http://localhost:8000` |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name | `my-cloud` |
+| `VITE_CLOUDINARY_UPLOAD_PRESET` | Unsigned upload preset name | `mabati_uploads` |
+| `VITE_WHATSAPP_NUMBER` | WhatsApp business number (no +) | `254700000000` |
+
+### Development
+
+```bash
+pnpm dev
+```
+
+### Production Build
+
+```bash
+pnpm build
+```
+
+---
+
+## Project Structure
 
 ```
+src/
+├── components/
+│   ├── admin/          # AdminLayout (sidebar + topbar)
+│   ├── layout/         # Navbar, Footer, PublicLayout
+│   └── ui/             # Badge, Card, Modal, Toast, LoadingSpinner, etc.
+├── hooks/              # useToast
+├── lib/
+│   ├── api.ts          # Axios client + all API functions
+│   └── utils.ts        # cn(), formatCurrency(), formatDate(), WhatsApp helpers
+├── pages/
+│   ├── admin/          # Dashboard, Products, Categories, Inventory, Orders, Landing, Users, Settings
+│   ├── HomePage.tsx
+│   ├── ProductsPage.tsx
+│   ├── ProductDetailPage.tsx
+│   ├── LoginPage.tsx
+│   ├── RegisterPage.tsx
+│   └── MyOrdersPage.tsx
+├── stores/
+│   └── authStore.ts    # Zustand auth store with JWT persistence
+├── types/
+│   └── index.ts        # All TypeScript interfaces
+├── App.tsx             # Router + providers + auth guards
+└── main.tsx            # Entry point
+```
+
+---
+
+## Authentication & Roles
+
+| Role | Access |
+|---|---|
+| `customer` | Public pages + My Orders |
+| `staff` | Admin dashboard (read/write) |
+| `admin` | Full admin access |
+
+JWT tokens are stored in `localStorage` and automatically refreshed via the Axios interceptor.
+
+---
+
+## Cloudinary Setup
+
+1. Create a free Cloudinary account at https://cloudinary.com
+2. Go to **Settings → Upload → Upload Presets**
+3. Create an **unsigned** preset
+4. Set `VITE_CLOUDINARY_CLOUD_NAME` and `VITE_CLOUDINARY_UPLOAD_PRESET` in `.env`
+
+---
+
+## Backend API
+
+This frontend connects to the mabatiAPI FastAPI backend. Ensure it is running at the URL specified in `VITE_API_URL`.
+
+Key endpoints used:
+
+| Endpoint | Description |
+|---|---|
+| `POST /auth/login` | OAuth2 password login |
+| `POST /auth/register` | User registration |
+| `GET /products` | Public product list with filters |
+| `GET /categories` | Public category list |
+| `GET /admin/dashboard` | Dashboard stats |
+| `GET/POST/PUT/DELETE /admin/products` | Product CRUD |
+| `GET/POST/PUT/DELETE /admin/categories` | Category CRUD |
+| `GET /admin/inventory` | Low-stock inventory |
+| `POST /admin/inventory/{id}/adjust` | Stock adjustment |
+| `GET /admin/orders` | All orders |
+| `PUT /admin/orders/{id}/status` | Update order status |
+| `POST /users/change-password` | Change own password |
