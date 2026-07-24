@@ -48,8 +48,13 @@ const RequireAuth: React.FC<{ allowedRoles?: string[] }> = ({ allowedRoles }) =>
 };
 
 const GuestOnly: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  const { isAuthenticated, user } = useAuthStore();
+  if (isAuthenticated) {
+    if (user?.role === "admin" || user?.role === "staff") {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
   return <Outlet />;
 };
 
