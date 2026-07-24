@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
     setError("");
     setLoading(true);
     try {
-      const tokens = await authApi.login(email, password);
+      const tokens = await authApi.login({ username: email, password });
       localStorage.setItem("access_token", tokens.access_token);
       localStorage.setItem("refresh_token", tokens.refresh_token);
       const user = await authApi.me();

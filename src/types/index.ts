@@ -8,18 +8,15 @@ export interface User {
   created_at: string;
   updated_at: string;
 }
-
 export interface AuthTokens {
   access_token: string;
   refresh_token: string;
   token_type: string;
 }
-
 export interface LoginCredentials {
-  username: string; // email used as username per OAuth2PasswordRequestForm
+  username: string;
   password: string;
 }
-
 export interface RegisterData {
   name: string;
   email: string;
@@ -35,55 +32,87 @@ export interface Category {
   created_at: string;
   updated_at: string;
 }
-
 export interface CategoryCreate {
   name: string;
   description?: string;
+}
+
+// ─── Product Image ────────────────────────────────────────────────────────────
+export interface ProductImage {
+  id: number;
+  product_id: number;
+  image_url: string;
+  is_primary: boolean;
+  display_order: number;
+  alt_text?: string;
+}
+export interface ProductImageCreate {
+  image_url: string;
+  is_primary?: boolean;
+  display_order?: number;
+  alt_text?: string;
 }
 
 // ─── Product ──────────────────────────────────────────────────────────────────
 export interface Product {
   id: number;
   name: string;
+  slug?: string;
   description?: string;
   brand?: string;
-  price: string;
-  discount_price?: string;
-  color?: string;
+  product_type?: string;
+  material?: string;
+  finish?: string;
+  profile?: string;
   gauge?: string;
   length?: number;
   width?: number;
-  profile?: string;
+  color?: string;
+  unit?: string;
+  price_from: string;
+  price_to?: string;
+  discount_price?: string;
   stock_quantity: number;
+  minimum_order_quantity: number;
   low_stock_threshold: number;
-  image_url?: string;
+  is_featured: boolean;
+  is_available: boolean;
   is_active: boolean;
+  image_url?: string;
+  images: ProductImage[];
   category_id: number;
   category?: Category;
   created_at: string;
   updated_at: string;
 }
-
 export interface ProductCreate {
   name: string;
+  slug?: string;
   description?: string;
   brand?: string;
-  price: number;
-  discount_price?: number;
-  color?: string;
+  product_type?: string;
+  material?: string;
+  finish?: string;
+  profile?: string;
   gauge?: string;
   length?: number;
   width?: number;
-  profile?: string;
+  color?: string;
+  unit?: string;
+  price_from: number;
+  price_to?: number;
+  discount_price?: number;
   stock_quantity?: number;
+  minimum_order_quantity?: number;
   low_stock_threshold?: number;
-  image_url?: string;
+  is_featured?: boolean;
+  is_available?: boolean;
   is_active?: boolean;
+  image_url?: string;
+  images?: ProductImageCreate[];
   category_id: number;
 }
-
-export interface ProductUpdate extends Partial<ProductCreate> {}
-
+export interface ProductUpdate extends Partial<Omit<ProductCreate, "images">> {}
 export interface ProductFilters {
   search?: string;
   category_id?: number;
@@ -91,6 +120,9 @@ export interface ProductFilters {
   gauge?: string;
   min_price?: number;
   max_price?: number;
+  in_stock?: boolean;
+  is_featured?: boolean;
+  product_type?: string;
 }
 
 // ─── Inventory ────────────────────────────────────────────────────────────────
@@ -100,7 +132,6 @@ export interface InventoryItem {
   stock_quantity: number;
   low_stock_threshold: number;
 }
-
 export interface InventoryLog {
   id: number;
   product_id: number;
@@ -110,7 +141,6 @@ export interface InventoryLog {
   performed_by?: number;
   created_at: string;
 }
-
 export interface InventoryAdjust {
   change: number;
   reason?: string;
@@ -118,20 +148,13 @@ export interface InventoryAdjust {
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
-export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "completed"
-  | "cancelled";
-
+export type OrderStatus = "pending" | "confirmed" | "processing" | "completed" | "cancelled";
 export interface OrderItem {
   id: number;
   product_id: number;
   quantity: number;
   unit_price: string;
 }
-
 export interface Order {
   id: number;
   customer_id: number;
@@ -143,7 +166,6 @@ export interface Order {
   created_at: string;
   updated_at: string;
 }
-
 export interface OrderCreate {
   items: { product_id: number; quantity: number }[];
   shipping_address?: string;
@@ -157,7 +179,6 @@ export interface SalesSummary {
   pending_orders: number;
   cancelled_orders: number;
 }
-
 export interface DashboardStats {
   total_products: number;
   total_categories: number;

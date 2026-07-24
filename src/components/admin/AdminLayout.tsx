@@ -1,143 +1,155 @@
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  BarChart3,
+  ChevronLeft,
+  ChevronRight,
+  Home,
   LayoutDashboard,
-  Package,
-  Tag,
-  Warehouse,
-  ShoppingCart,
-  Users,
-  Settings,
   LogOut,
   Menu,
+  Package,
+  Settings,
+  ShoppingCart,
+  Tag,
+  Users,
+  Warehouse,
   X,
-  ChevronRight,
-  Image,
-  Bell,
 } from "lucide-react";
-import { cn } from "../../lib/utils";
 import { useAuthStore } from "../../stores/authStore";
 
-const navItems = [
-  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Products", href: "/admin/products", icon: Package },
-  { label: "Categories", href: "/admin/categories", icon: Tag },
-  { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
-  { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-  { label: "Landing Page", href: "/admin/landing", icon: Image },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+const NAV_ITEMS = [
+  { href: "/admin", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
+  { href: "/admin/products", label: "Products", icon: <Package size={18} /> },
+  { href: "/admin/categories", label: "Categories", icon: <Tag size={18} /> },
+  { href: "/admin/inventory", label: "Inventory", icon: <Warehouse size={18} /> },
+  { href: "/admin/orders", label: "Orders", icon: <ShoppingCart size={18} /> },
+  { href: "/admin/users", label: "Users", icon: <Users size={18} /> },
+  { href: "/admin/landing", label: "Homepage", icon: <Home size={18} /> },
+  { href: "/admin/settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
-export const AdminLayout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+
+const AdminLayout: React.FC = () => {
+  const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  const isActive = (href: string) =>
+    href === "/admin"
+      ? location.pathname === "/admin"
+      : location.pathname.startsWith(href);
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-[#1e2d4a]">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#2952a3] to-[#152b55] flex items-center justify-center shadow-md">
-            <span className="text-white font-black text-base">M</span>
-          </div>
+      <div className={`flex items-center gap-3 px-4 py-5 border-b border-white/10 ${collapsed ? "justify-center" : ""}`}>
+        <div className="w-8 h-8 rounded-lg bg-[#2952a3] flex items-center justify-center shrink-0">
+          <BarChart3 size={16} className="text-white" />
+        </div>
+        {!collapsed && (
           <div>
-            <span className="text-white font-bold text-base leading-none block">
-              Mabati
-            </span>
-            <span className="text-[#4e5a7a] text-[10px] font-medium tracking-widest uppercase">
-              Admin Panel
-            </span>
+            <div className="text-white font-black text-sm leading-none">Mabati</div>
+            <div className="text-[#6b7a9e] text-xs">Admin Panel</div>
           </div>
-        </Link>
+        )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        <div className="space-y-0.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              item.href === "/admin"
-                ? location.pathname === "/admin"
-                : location.pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group",
-                  isActive
-                    ? "bg-[#2952a3] text-white shadow-md"
-                    : "text-[#8e9bbf] hover:bg-[#1e2d4a] hover:text-white"
-                )}
-              >
-                <Icon
-                  size={18}
-                  className={cn(
-                    "shrink-0 transition-colors",
-                    isActive
-                      ? "text-white"
-                      : "text-[#4e5a7a] group-hover:text-white"
-                  )}
-                />
-                {item.label}
-                {isActive && (
-                  <ChevronRight size={14} className="ml-auto opacity-60" />
-                )}
-              </Link>
-            );
-          })}
-        </div>
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {NAV_ITEMS.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              onClick={() => setMobileOpen(false)}
+              title={collapsed ? item.label : undefined}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                active
+                  ? "bg-[#2952a3] text-white shadow-lg shadow-[#2952a3]/30"
+                  : "text-[#8e9bbf] hover:bg-white/10 hover:text-white"
+              } ${collapsed ? "justify-center" : ""}`}
+            >
+              <span className="shrink-0">{item.icon}</span>
+              {!collapsed && <span>{item.label}</span>}
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* User section */}
-      <div className="px-3 py-4 border-t border-[#1e2d4a]">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#1e2d4a] mb-2">
-          <div className="w-8 h-8 rounded-full bg-[#2952a3] flex items-center justify-center text-white text-sm font-bold shrink-0">
-            {user?.name.charAt(0).toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-white text-sm font-semibold truncate">
-              {user?.name}
+      {/* User + Logout */}
+      <div className="px-3 py-4 border-t border-white/10">
+        {!collapsed && user && (
+          <div className="flex items-center gap-3 px-3 py-2 mb-2">
+            <div className="w-8 h-8 rounded-full bg-[#2952a3] flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {user.name.charAt(0).toUpperCase()}
             </div>
-            <div className="text-[#4e5a7a] text-xs capitalize">{user?.role}</div>
+            <div className="overflow-hidden">
+              <div className="text-white text-xs font-semibold truncate">{user.name}</div>
+              <div className="text-[#6b7a9e] text-xs truncate">{user.role}</div>
+            </div>
           </div>
-        </div>
+        )}
+        <Link
+          to="/"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#8e9bbf] hover:bg-white/10 hover:text-white transition-all mb-1 ${collapsed ? "justify-center" : ""}`}
+          title={collapsed ? "View Site" : undefined}
+        >
+          <Home size={18} className="shrink-0" />
+          {!collapsed && <span>View Site</span>}
+        </Link>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#8e9bbf] hover:bg-[#1e2d4a] hover:text-red-400 transition-all w-full"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all w-full ${collapsed ? "justify-center" : ""}`}
+          title={collapsed ? "Sign Out" : undefined}
         >
-          <LogOut size={16} />
-          Sign Out
+          <LogOut size={18} className="shrink-0" />
+          {!collapsed && <span>Sign Out</span>}
         </button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
+    <div className="flex h-screen bg-[#f0f3f9] overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-col w-64 bg-[#0a1628] shrink-0">
+      <aside
+        className={`hidden lg:flex flex-col bg-[#0a1628] transition-all duration-300 shrink-0 ${
+          collapsed ? "w-16" : "w-60"
+        }`}
+      >
         <SidebarContent />
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 translate-x-full w-5 h-10 bg-[#0a1628] rounded-r-lg flex items-center justify-center text-[#6b7a9e] hover:text-white transition-colors z-10"
+          style={{ left: collapsed ? "4rem" : "15rem" }}
+        >
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
       </aside>
 
       {/* Mobile Sidebar */}
-      {sidebarOpen && (
+      {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <aside className="relative w-64 bg-[#0a1628] h-full shadow-2xl">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
+          <aside className="relative w-64 bg-[#0a1628] h-full flex flex-col shadow-2xl">
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-4 right-4 text-[#6b7a9e] hover:text-white"
+            >
+              <X size={20} />
+            </button>
             <SidebarContent />
           </aside>
         </div>
@@ -146,45 +158,39 @@ export const AdminLayout: React.FC = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="bg-white border-b border-[#dde3f0] px-4 sm:px-6 h-16 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-[#6b7a9e] hover:bg-[#f0f3f9] transition-colors"
-            >
-              <Menu size={20} />
-            </button>
-            {/* Breadcrumb */}
-            <div className="hidden sm:flex items-center gap-2 text-sm text-[#6b7a9e]">
-              <span>Admin</span>
-              <ChevronRight size={14} />
-              <span className="text-[#0a1628] font-medium capitalize">
-                {location.pathname.split("/").pop() || "Dashboard"}
-              </span>
-            </div>
+        <header className="bg-white border-b border-[#dde3f0] px-4 sm:px-6 py-4 flex items-center justify-between shrink-0">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="lg:hidden p-2 rounded-lg text-[#6b7a9e] hover:bg-[#f0f3f9]"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="hidden lg:block">
+            <h1 className="text-sm font-semibold text-[#0a1628]">
+              {NAV_ITEMS.find((n) => isActive(n.href))?.label || "Admin"}
+            </h1>
           </div>
-
-          <div className="flex items-center gap-3">
-            <button className="p-2 rounded-lg text-[#6b7a9e] hover:bg-[#f0f3f9] relative transition-colors">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
-            <Link
-              to="/"
-              target="_blank"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#2952a3] bg-[#f0f3f9] rounded-lg hover:bg-[#dde3f0] transition-colors"
-            >
-              View Site
-              <ChevronRight size={12} />
-            </Link>
+          <div className="flex items-center gap-3 ml-auto">
+            {user && (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#2952a3] flex items-center justify-center text-white text-xs font-bold">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden sm:block text-sm font-medium text-[#0a1628]">
+                  {user.name.split(" ")[0]}
+                </span>
+              </div>
+            )}
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Outlet />
         </main>
       </div>
     </div>
   );
 };
+
+export default AdminLayout;

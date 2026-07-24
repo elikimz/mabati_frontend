@@ -9,7 +9,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "./stores/authStore";
 import { PublicLayout } from "./components/layout/PublicLayout";
-import { AdminLayout } from "./components/admin/AdminLayout";
+import AdminLayout from "./components/admin/AdminLayout";
 import { PageLoader } from "./components/ui";
 
 const HomePage = lazy(() => import("./pages/HomePage"));

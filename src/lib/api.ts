@@ -7,65 +7,38 @@ import type {
   InventoryAdjust,
   InventoryItem,
   InventoryLog,
+  LoginCredentials,
   Order,
   OrderCreate,
   OrderStatus,
   Product,
   ProductCreate,
   ProductFilters,
+  ProductImage,
+  ProductImageCreate,
   ProductUpdate,
   RegisterData,
   User,
 } from "../types";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
 export const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
   headers: { "Content-Type": "application/json" },
 });
 
-// ─── Token management ─────────────────────────────────────────────────────────
+// Attach JWT token
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-apiClient.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true;
-      const refreshToken = localStorage.getItem("refresh_token");
-      if (refreshToken) {
-        try {
-          const { data } = await axios.post<AuthTokens>(
-            `${BASE_URL}/auth/refresh`,
-            { refresh_token: refreshToken }
-          );
-          localStorage.setItem("access_token", data.access_token);
-          localStorage.setItem("refresh_token", data.refresh_token);
-          original.headers.Authorization = `Bearer ${data.access_token}`;
-          return apiClient(original);
-        } catch {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          window.location.href = "/login";
-        }
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 export const authApi = {
-  login: async (email: string, password: string): Promise<AuthTokens> => {
+  login: async (creds: LoginCredentials): Promise<AuthTokens> => {
     const form = new URLSearchParams();
-    form.append("username", email);
-    form.append("password", password);
+    form.append("username", creds.username);
+    form.append("password", creds.password);
     const { data } = await apiClient.post<AuthTokens>("/auth/login", form, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
@@ -95,8 +68,24 @@ export const productsApi = {
     });
     return data;
   },
+  featured: async (limit = 8): Promise<Product[]> => {
+    const { data } = await apiClient.get<Product[]>("/products/featured", {
+      params: { limit },
+    });
+    return data;
+  },
   get: async (id: number): Promise<Product> => {
     const { data } = await apiClient.get<Product>(`/products/${id}`);
+    return data;
+  },
+  getBySlug: async (slug: string): Promise<Product> => {
+    const { data } = await apiClient.get<Product>(`/products/slug/${slug}`);
+    return data;
+  },
+  related: async (id: number, limit = 6): Promise<Product[]> => {
+    const { data } = await apiClient.get<Product[]>(`/products/${id}/related`, {
+      params: { limit },
+    });
     return data;
   },
   create: async (payload: ProductCreate): Promise<Product> => {
@@ -104,14 +93,21 @@ export const productsApi = {
     return data;
   },
   update: async (id: number, payload: ProductUpdate): Promise<Product> => {
-    const { data } = await apiClient.put<Product>(
-      `/admin/products/${id}`,
-      payload
-    );
+    const { data } = await apiClient.put<Product>(`/admin/products/${id}`, payload);
     return data;
   },
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/products/${id}`);
+  },
+  addImage: async (productId: number, payload: ProductImageCreate): Promise<ProductImage> => {
+    const { data } = await apiClient.post<ProductImage>(
+      `/admin/products/${productId}/images`,
+      payload
+    );
+    return data;
+  },
+  deleteImage: async (productId: number, imageId: number): Promise<void> => {
+    await apiClient.delete(`/admin/products/${productId}/images/${imageId}`);
   },
 };
 
@@ -122,20 +118,11 @@ export const categoriesApi = {
     return data;
   },
   create: async (payload: CategoryCreate): Promise<Category> => {
-    const { data } = await apiClient.post<Category>(
-      "/admin/categories",
-      payload
-    );
+    const { data } = await apiClient.post<Category>("/admin/categories", payload);
     return data;
   },
-  update: async (
-    id: number,
-    payload: Partial<CategoryCreate>
-  ): Promise<Category> => {
-    const { data } = await apiClient.put<Category>(
-      `/admin/categories/${id}`,
-      payload
-    );
+  update: async (id: number, payload: Partial<CategoryCreate>): Promise<Category> => {
+    const { data } = await apiClient.put<Category>(`/admin/categories/${id}`, payload);
     return data;
   },
   delete: async (id: number): Promise<void> => {
@@ -153,9 +140,7 @@ export const inventoryApi = {
     await apiClient.post(`/admin/inventory/${id}/adjust`, payload);
   },
   logs: async (id: number): Promise<InventoryLog[]> => {
-    const { data } = await apiClient.get<InventoryLog[]>(
-      `/admin/inventory/${id}/logs`
-    );
+    const { data } = await apiClient.get<InventoryLog[]>(`/admin/inventory/${id}/logs`);
     return data;
   },
 };
@@ -175,10 +160,7 @@ export const ordersApi = {
     return data;
   },
   updateStatus: async (id: number, status: OrderStatus): Promise<Order> => {
-    const { data } = await apiClient.put<Order>(
-      `/admin/orders/${id}/status`,
-      { status }
-    );
+    const { data } = await apiClient.put<Order>(`/admin/orders/${id}/status`, { status });
     return data;
   },
 };
@@ -193,8 +175,8 @@ export const dashboardApi = {
 
 // ─── Cloudinary ───────────────────────────────────────────────────────────────
 export const uploadToCloudinary = async (file: File): Promise<string> => {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "doste1wr0";
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "task_images";
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", uploadPreset);
@@ -203,4 +185,46 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
     formData
   );
   return data.secure_url as string;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+export const formatPriceRange = (product: Product): string => {
+  const from = parseFloat(product.price_from).toLocaleString("en-KE");
+  if (product.price_to) {
+    const to = parseFloat(product.price_to).toLocaleString("en-KE");
+    return `KES ${from} – ${to}`;
+  }
+  return `KES ${from}`;
+};
+
+export const getPrimaryImage = (product: Product): string => {
+  const primary = product.images?.find((img) => img.is_primary);
+  return (
+    primary?.image_url ||
+    product.images?.[0]?.image_url ||
+    product.image_url ||
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
+  );
+};
+
+export const generateWhatsAppUrl = (phone: string, message: string): string => {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+};
+
+export const generateOrderMessage = (
+  productName: string,
+  gauge?: string,
+  color?: string,
+  quantity?: number,
+  location?: string
+): string => {
+  return `Hello! I would like a quotation for:
+
+*Product:* ${productName}
+*Gauge:* ${gauge || "Please advise"}
+*Color:* ${color || "Please advise"}
+*Quantity:* ${quantity || 1} ${quantity && quantity > 1 ? "pieces" : "piece"}
+*Delivery Location:* ${location || "To be confirmed"}
+
+Please send me your best price. Thank you!`;
 };
