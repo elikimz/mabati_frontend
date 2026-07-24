@@ -173,6 +173,27 @@ export const dashboardApi = {
   },
 };
 
+// ─── Banners ──────────────────────────────────────────────────────────────────
+export const bannersApi = {
+  list: async (location?: string, activeOnly = true): Promise<any[]> => {
+    const { data } = await apiClient.get<any[]>("/banners", {
+      params: { location, active_only: activeOnly },
+    });
+    return data;
+  },
+  create: async (payload: any): Promise<any> => {
+    const { data } = await apiClient.post<any>("/admin/banners", payload);
+    return data;
+  },
+  update: async (id: number, payload: any): Promise<any> => {
+    const { data } = await apiClient.patch<any>(`/admin/banners/${id}`, payload);
+    return data;
+  },
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/admin/banners/${id}`);
+  },
+};
+
 // ─── Cloudinary ───────────────────────────────────────────────────────────────
 export const uploadToCloudinary = async (file: File): Promise<string> => {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "doste1wr0";
