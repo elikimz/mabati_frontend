@@ -28,6 +28,7 @@ const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminInventory = lazy(() => import("./pages/admin/AdminInventory"));
 const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
 const AdminLanding = lazy(() => import("./pages/admin/AdminLanding"));
+const AdminSiteContent = lazy(() => import("./pages/admin/AdminSiteContent"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 
@@ -97,6 +98,7 @@ const App: React.FC = () => {
                 <Route path="inventory" element={<AdminInventory />} />
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="landing" element={<AdminLanding />} />
+                <Route path="site-content" element={<AdminSiteContent />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>

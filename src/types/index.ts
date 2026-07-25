@@ -113,6 +113,22 @@ export interface ProductCreate {
   category_id: number;
 }
 export interface ProductUpdate extends Partial<Omit<ProductCreate, "images">> {}
+
+// ─── Site Content ─────────────────────────────────────────────────────────────
+export interface SiteContentOut {
+  id: number;
+  key: string;
+  value: any;
+  description?: string;
+  updated_at: string;
+}
+
+export interface SiteContentCreate {
+  key: string;
+  value: any;
+  description?: string;
+}
+
 export interface ProductFilters {
   search?: string;
   category_id?: number;

@@ -10,22 +10,49 @@ import {
   MessageCircle,
   Phone,
   ChevronDown,
+  Hammer,
+  Users,
+  MapPin,
+  Award,
+  Image as ImageIcon,
+  Quote,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { productsApi, bannersApi } from "../lib/api";
+import { productsApi, bannersApi, siteContentApi } from "../lib/api";
 import { cn } from "../lib/utils";
 import { useTheme } from "../contexts/ThemeContext";
+import type { Product } from "../types";
 
 const WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "254788873611";
+
+interface Stat {
+  icon: React.ElementType;
+  value: string;
+  label: string;
+}
+
+interface Testimonial {
+  quote: string;
+  author: string;
+  title: string;
+  image: string;
+}
+
+interface GalleryItem {
+  id: number;
+  image_url: string;
+  title: string;
+  description?: string;
+}
 
 export default function HomePage() {
   const { theme } = useTheme();
   const [activeSlide, setActiveSlide] = useState(0);
 
-  // Fetch banners and products
+  // Fetch banners, products, and site content
   const { data: banners = [] } = useQuery({
     queryKey: ["banners"],
-    queryFn: () => bannersApi.list(),
+    queryFn: () => bannersApi.list("hero"),
   });
 
   const { data: products = [] } = useQuery({
@@ -33,16 +60,14 @@ export default function HomePage() {
     queryFn: () => productsApi.list(),
   });
 
-  const bestSellers = products.slice(0, 6);
+  const { data: siteContent = [] } = useQuery({
+    queryKey: ["siteContent"],
+    queryFn: () => siteContentApi.list(),
+  });
 
-  // Auto-rotate hero slides
-  useEffect(() => {
-    if (banners.length === 0) return;
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % banners.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [banners.length]);
+  const getSiteContentValue = (key: string, defaultValue: any = null) => {
+    return siteContent.find(item => item.key === key)?.value || defaultValue;
+  };
 
   const heroSlides = banners.length > 0
     ? banners
@@ -50,16 +75,150 @@ export default function HomePage() {
         {
           id: 1,
           title: "Premium Roofing Materials",
-          description: "High-quality mabati sheets for your construction needs",
-          image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=1200&h=600&fit=crop",
+          subtitle: "High-quality mabati sheets for your construction needs",
+          image_url: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=1200&h=600&fit=crop",
+          link_url: "/products",
           buttonText: "Shop Now",
-          buttonLink: "/products",
         },
       ];
 
+  const stats: Stat[] = getSiteContentValue("homepage_stats", [
+    { icon: Hammer, value: "1000+", label: "Projects Completed" },
+    { icon: Users, value: "500+", label: "Satisfied Clients" },
+    { icon: MapPin, value: "10+", label: "Counties Served" },
+    { icon: Award, value: "20+", label: "Years Experience" },
+  ]);
+
+  const testimonials: Testimonial[] = getSiteContentValue("homepage_testimonials", [
+    {
+      quote: "MRM Mabati provided excellent quality roofing for our new home. The service was professional and the delivery was prompt.",
+      author: "Jane Doe",
+      title: "Homeowner, Nairobi",
+      image: "https://randomuser.me/api/portraits/women/68.jpg",
+    },
+    {
+      quote: "Their stone-coated tiles transformed our commercial building. Highly recommend their durable and aesthetic solutions.",
+      author: "John Smith",
+      title: "Developer, Mombasa",
+      image: "https://randomuser.me/api/portraits/men/45.jpg",
+    },
+  ]);
+
+  const galleryItems: GalleryItem[] = getSiteContentValue("homepage_gallery", [
+    { id: 1, image_url: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800&h=600&fit=crop", title: "Modern Residential Project" },
+    { id: 2, image_url: "https://images.unsplash.com/photo-1517057013111-01053b2156a6?w=800&h=600&fit=crop", title: "Commercial Building Roofing" },
+    { id: 3, image_url: "https://images.unsplash.com/photo-1542382257-809e69602741?w=800&h=600&fit=crop", title: "Industrial Warehouse Solution" },
+    { id: 4, image_url: "https://images.unsplash.com/photo-1523987355523-c7b0b2871d37?w=800&h=600&fit=crop", title: "Elegant Tile Profile Installation" },
+  ]);
+
+  const featuredProducts = products.filter(p => p.is_featured).slice(0, 6);
+  const bestSellers = products.slice(0, 6); // Assuming best sellers are top 6 products for now
+
+  // Auto-rotate hero slides
+  useEffect(() => {
+    if (heroSlides.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [heroSlides.length]);
+
+  const ProductCard = ({ product }: { product: Product }) => (
+    <Link
+      key={product.id}
+      to={`/products/${product.slug || product.id}`}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-2xl",
+        theme === "dark"
+          ? "bg-[#152b55] hover:bg-[#1e3a6e]"
+          : "bg-white hover:shadow-xl"
+      )}
+    >
+      {/* Product Image */}
+      <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
+        {product.images && product.images.length > 0 ? (
+          <img
+            src={product.images[0]?.image_url || product.image_url || ""}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/30">
+            <div className="text-center">
+              <div className="text-4xl mb-2">📦</div>
+              <div className="text-sm">No image</div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Content Overlay */}
+      <div className={cn(
+        "p-6",
+        theme === "dark" ? "bg-[#152b55]" : "bg-white"
+      )}>
+        <h3 className={cn(
+          "font-bold text-lg mb-2 line-clamp-2",
+          theme === "dark" ? "text-white" : "text-[#0a1628]"
+        )}>
+          {product.name}
+        </h3>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {product.gauge && (
+            <span className={cn(
+              "text-xs font-semibold px-3 py-1 rounded-full",
+              theme === "dark"
+                ? "bg-white/10 text-[#4d79ff]"
+                : "bg-[#2952a3]/10 text-[#2952a3]"
+            )}>
+              {product.gauge} Gauge
+            </span>
+          )}
+          {product.color && (
+            <span className={cn(
+              "text-xs font-semibold px-3 py-1 rounded-full",
+              theme === "dark"
+                ? "bg-white/10 text-[#f0c94a]"
+                : "bg-[#d4a017]/10 text-[#d4a017]"
+            )}>
+              {product.color}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            {product.price_from && (
+              <div className={cn(
+                "text-sm font-semibold",
+                theme === "dark" ? "text-[#8e9bbf]" : "text-[#6b7a9e]"
+              )}>
+                From KES {Number(product.price_from).toLocaleString()}
+              </div>
+            )}
+            {product.stock_quantity > 0 ? (
+              <div className="text-xs text-[#10b981] font-semibold mt-1">
+                In Stock
+              </div>
+            ) : (
+              <div className="text-xs text-[#ef4444] font-semibold mt-1">
+                Out of Stock
+              </div>
+            )}
+          </div>
+          <ArrowRight size={18} className={cn(
+            "transition-transform group-hover:translate-x-1",
+            theme === "dark" ? "text-[#4d79ff]" : "text-[#2952a3]"
+          )} />
+        </div>
+      </div>
+    </Link>
+  );
+
   return (
     <div className={cn(theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
-      {/* Hero Slider - Image-First */}
+      {/* Hero Slider */}
       <section className="relative pt-20 overflow-hidden">
         <div className="relative h-[600px] md:h-[700px] lg:h-[800px] w-full">
           {heroSlides.map((slide, index) => (
@@ -74,7 +233,7 @@ export default function HomePage() {
               <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
-                  backgroundImage: `url('${slide.image}')`,
+                  backgroundImage: `url('${slide.image_url}')`,
                 }}
               />
 
@@ -97,11 +256,11 @@ export default function HomePage() {
                       {slide.title}
                     </h1>
                     <p className="text-xl md:text-2xl text-[#b8c1d9] mb-8 leading-relaxed">
-                      {slide.description}
+                      {slide.subtitle}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4">
                       <Link
-                        to={slide.buttonLink || "/products"}
+                        to={slide.link_url || "/products"}
                         className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-[#2952a3] text-white font-bold rounded-2xl hover:bg-[#1e3d7a] transition-colors shadow-xl shadow-[#2952a3]/30 text-lg"
                       >
                         {slide.buttonText || "Explore Products"}
@@ -124,30 +283,54 @@ export default function HomePage() {
           ))}
 
           {/* Slide Indicators */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
-            {heroSlides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setActiveSlide(index)}
-                className={cn(
-                  "h-2 rounded-full transition-all duration-300",
-                  index === activeSlide
-                    ? "w-8 bg-white"
-                    : "w-2 bg-white/40 hover:bg-white/60"
-                )}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
+          {heroSlides.length > 1 && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
+              {heroSlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveSlide(index)}
+                  className={cn(
+                    "h-2 rounded-full transition-all duration-300",
+                    index === activeSlide
+                      ? "w-8 bg-white"
+                      : "w-2 bg-white/40 hover:bg-white/60"
+                  )}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Scroll indicator */}
           <div className="absolute bottom-8 right-8 hidden md:flex flex-col items-center gap-2 text-white/50">
             <ChevronDown size={16} className="animate-bounce" />
           </div>
         </div>
+
+        {/* Stats Bar */}
+        <div className={cn(
+          "relative z-10 py-8",
+          theme === "dark" ? "bg-[#0a1628]" : "bg-[#f8fafc]"
+        )}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              {stats.map((stat, i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <stat.icon size={36} className="text-[#2952a3] mb-2" />
+                  <div className={cn("text-3xl font-bold", theme === "dark" ? "text-white" : "text-[#0a1628]")}>
+                    {stat.value}
+                  </div>
+                  <div className={cn("text-sm uppercase tracking-wider", theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]")}>
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* Trust Bar - Minimal */}
+      {/* Trust Bar */}
       <section className={cn(
         "py-12 border-b",
         theme === "dark"
@@ -180,203 +363,36 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Solutions - Image-First */}
-      <section className={cn("py-20", theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-16 text-center">
-            <h2 className={cn("text-4xl md:text-5xl font-black mb-4", theme === "dark" ? "text-white" : "text-[#0a1628]")}>
-              Featured Roofing Solutions
-            </h2>
-            <p className={cn("text-lg", theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]")}>
-              Professional-grade materials for every project
-            </p>
-          </div>
+      {/* Featured Roofing Systems (Products) */}
+      {featuredProducts.length > 0 && (
+        <section className={cn("py-20", theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-16 text-center">
+              <h2 className={cn("text-4xl md:text-5xl font-black mb-4", theme === "dark" ? "text-white" : "text-[#0a1628]")}>
+                Featured Roofing Systems
+              </h2>
+              <p className={cn("text-lg", theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]")}>
+                Professional-grade materials for every project
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[
-              {
-                title: "Box Profile Sheets",
-                description: "Premium corrugated roofing with superior durability",
-                image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&h=400&fit=crop",
-                color: "from-blue-600 to-blue-900",
-              },
-              {
-                title: "Tile Profile Sheets",
-                description: "Elegant aesthetic with industrial strength",
-                image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&h=400&fit=crop",
-                color: "from-slate-600 to-slate-900",
-              },
-              {
-                title: "Stone Coated Sheets",
-                description: "Weather-resistant with natural stone texture",
-                image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&h=400&fit=crop",
-                color: "from-amber-600 to-amber-900",
-              },
-              {
-                title: "Gutters & Downpipes",
-                description: "Complete drainage system solutions",
-                image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&h=400&fit=crop",
-                color: "from-green-600 to-green-900",
-              },
-            ].map((solution, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "group relative overflow-hidden rounded-3xl h-80 cursor-pointer transition-transform duration-300 hover:scale-105",
-                  theme === "dark" ? "shadow-2xl" : "shadow-xl"
-                )}
-              >
-                {/* Background Image */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                  style={{ backgroundImage: `url('${solution.image}')` }}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
 
-                {/* Overlay */}
-                <div className={cn(
-                  "absolute inset-0 bg-gradient-to-t",
-                  `${solution.color}`
-                )} />
-
-                {/* Content */}
-                <div className="absolute inset-0 flex flex-col justify-end p-8 text-white">
-                  <h3 className="text-2xl font-black mb-2">{solution.title}</h3>
-                  <p className="text-white/90 mb-4">{solution.description}</p>
-                  <Link
-                    to="/products"
-                    className="inline-flex items-center gap-2 text-white font-semibold hover:gap-3 transition-all"
-                  >
-                    View Products <ArrowRight size={18} />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Best Sellers - Full Width Showcase */}
-      <section className={cn(
-        "py-20 border-t",
-        theme === "dark"
-          ? "bg-[#0a1628] border-white/5"
-          : "bg-[#f8fafc] border-[#dde3f0]"
-      )}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-16">
-            <h2 className={cn("text-4xl md:text-5xl font-black mb-4", theme === "dark" ? "text-white" : "text-[#0a1628]")}>
-              Best Sellers
-            </h2>
-            <p className={cn("text-lg", theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]")}>
-              Most trusted by construction professionals
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {bestSellers.map((product) => (
+            <div className="mt-12 text-center">
               <Link
-                key={product.id}
-                to={`/products/${product.slug || product.id}`}
-                className={cn(
-                  "group relative overflow-hidden rounded-2xl transition-all duration-300 hover:shadow-2xl",
-                  theme === "dark"
-                    ? "bg-[#152b55] hover:bg-[#1e3a6e]"
-                    : "bg-white hover:shadow-xl"
-                )}
+                to="/products"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-[#2952a3] text-white font-bold rounded-2xl hover:bg-[#1e3d7a] transition-colors shadow-lg"
               >
-                {/* Product Image */}
-                <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
-                  {product.images && product.images.length > 0 ? (
-                    <img
-                      src={product.images[0]?.image_url || product.image_url || ""}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/30">
-                      <div className="text-center">
-                        <div className="text-4xl mb-2">📦</div>
-                        <div className="text-sm">No image</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content Overlay */}
-                <div className={cn(
-                  "p-6",
-                  theme === "dark" ? "bg-[#152b55]" : "bg-white"
-                )}>
-                  <h3 className={cn(
-                    "font-bold text-lg mb-2 line-clamp-2",
-                    theme === "dark" ? "text-white" : "text-[#0a1628]"
-                  )}>
-                    {product.name}
-                  </h3>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {product.gauge && (
-                      <span className={cn(
-                        "text-xs font-semibold px-3 py-1 rounded-full",
-                        theme === "dark"
-                          ? "bg-white/10 text-[#4d79ff]"
-                          : "bg-[#2952a3]/10 text-[#2952a3]"
-                      )}>
-                        {product.gauge} Gauge
-                      </span>
-                    )}
-                    {product.color && (
-                      <span className={cn(
-                        "text-xs font-semibold px-3 py-1 rounded-full",
-                        theme === "dark"
-                          ? "bg-white/10 text-[#f0c94a]"
-                          : "bg-[#d4a017]/10 text-[#d4a017]"
-                      )}>
-                        {product.color}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      {product.price_from && (
-                        <div className={cn(
-                          "text-sm font-semibold",
-                          theme === "dark" ? "text-[#8e9bbf]" : "text-[#6b7a9e]"
-                        )}>
-                          From KES {Number(product.price_from).toLocaleString()}
-                        </div>
-                      )}
-                      {product.stock_quantity > 0 ? (
-                        <div className="text-xs text-[#10b981] font-semibold mt-1">
-                          In Stock
-                        </div>
-                      ) : (
-                        <div className="text-xs text-[#ef4444] font-semibold mt-1">
-                          Out of Stock
-                        </div>
-                      )}
-                    </div>
-                    <ArrowRight size={18} className={cn(
-                      "transition-transform group-hover:translate-x-1",
-                      theme === "dark" ? "text-[#4d79ff]" : "text-[#2952a3]"
-                    )} />
-                  </div>
-                </div>
+                View All Products <ArrowRight size={20} />
               </Link>
-            ))}
+            </div>
           </div>
-
-          <div className="mt-12 text-center">
-            <Link
-              to="/products"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-[#2952a3] text-white font-bold rounded-2xl hover:bg-[#1e3d7a] transition-colors shadow-lg"
-            >
-              View All Products <ArrowRight size={20} />
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Why Choose MRM - Minimal */}
       <section className={cn("py-20", theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
@@ -419,6 +435,72 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Roofing Inspiration Gallery */}
+      {galleryItems.length > 0 && (
+        <section className={cn("py-20", theme === "dark" ? "bg-[#0a1628]" : "bg-[#f0f3f9]")}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-16 text-center">
+              <h2 className={cn("text-4xl md:text-5xl font-black mb-4", theme === "dark" ? "text-white" : "text-[#0a1628]")}>
+                Roofing Inspiration Gallery
+              </h2>
+              <p className={cn("text-lg", theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]")}>
+                See our premium roofing solutions in action
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {galleryItems.map((item) => (
+                <div key={item.id} className="relative group rounded-2xl overflow-hidden shadow-lg aspect-video">
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex items-end p-6">
+                    <h3 className="text-white text-xl font-bold relative z-10">{item.title}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Testimonials */}
+      {testimonials.length > 0 && (
+        <section className={cn("py-20", theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-16 text-center">
+              <h2 className={cn("text-4xl md:text-5xl font-black mb-4", theme === "dark" ? "text-white" : "text-[#0a1628]")}>
+                What Our Clients Say
+              </h2>
+              <p className={cn("text-lg", theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]")}>
+                Trusted by homeowners and developers across Kenya
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {testimonials.map((testimonial, i) => (
+                <div key={i} className={cn(
+                  "p-8 rounded-2xl border",
+                  theme === "dark" ? "bg-[#0a1628] border-white/10" : "bg-[#f8fafc] border-[#dde3f0]"
+                )}>
+                  <Quote size={36} className="text-[#2952a3] mb-4" />
+                  <p className={cn("text-lg italic mb-6", theme === "dark" ? "text-white/90" : "text-[#0a1628]/90")}>
+                    "{testimonial.quote}"
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <img src={testimonial.image} alt={testimonial.author} className="w-12 h-12 rounded-full object-cover" />
+                    <div>
+                      <div className={cn("font-bold", theme === "dark" ? "text-white" : "text-[#0a1628]")}>{testimonial.author}</div>
+                      <div className={cn("text-sm", theme === "dark" ? "text-[#b8c1d9]" : "text-[#6b7a9e]")}>{testimonial.title}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className={cn(

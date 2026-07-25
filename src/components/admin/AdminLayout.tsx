@@ -16,6 +16,7 @@ import {
   Users,
   Warehouse,
   X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/admin/orders", label: "Orders", icon: <ShoppingCart size={18} /> },
   { href: "/admin/users", label: "Users", icon: <Users size={18} /> },
   { href: "/admin/landing", label: "Homepage", icon: <Home size={18} /> },
+  { href: "/admin/site-content", label: "Site Content", icon: <ImageIcon size={18} /> },
   { href: "/admin/settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 

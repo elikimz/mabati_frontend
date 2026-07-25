@@ -18,6 +18,8 @@ import type {
   ProductImageCreate,
   ProductUpdate,
   RegisterData,
+  SiteContentOut,
+  SiteContentCreate,
   User,
 } from "../types";
 
@@ -191,6 +193,25 @@ export const bannersApi = {
   },
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/banners/${id}`);
+  },
+};
+
+// ─── Site Content ─────────────────────────────────────────────────────────────
+export const siteContentApi = {
+  list: async (): Promise<SiteContentOut[]> => {
+    const { data } = await apiClient.get<SiteContentOut[]>("/site-content");
+    return data;
+  },
+  get: async (key: string): Promise<SiteContentOut> => {
+    const { data } = await apiClient.get<SiteContentOut>(`/site-content/${key}`);
+    return data;
+  },
+  createOrUpdate: async (payload: SiteContentCreate): Promise<SiteContentOut> => {
+    const { data } = await apiClient.post<SiteContentOut>("/site-content", payload);
+    return data;
+  },
+  delete: async (key: string): Promise<void> => {
+    await apiClient.delete(`/site-content/${key}`);
   },
 };
 
