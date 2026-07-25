@@ -277,20 +277,39 @@ export const generateWhatsAppUrl = (phone: string, message: string): string => {
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 };
 
+export interface QuoteVariationDetails {
+  label?: string;
+  sizeLabel?: string;
+  unit?: string;
+  price?: string | number;
+  specifications?: Record<string, string>;
+}
+
 export const generateOrderMessage = (
   productName: string,
   gauge?: string,
   color?: string,
   quantity?: number,
-  location?: string
+  location?: string,
+  variation?: QuoteVariationDetails
 ): string => {
+  const price = variation?.price !== undefined
+    ? `KES ${Number(variation.price).toLocaleString("en-KE")}${variation.unit ? ` per ${variation.unit}` : ""}`
+    : "Please advise";
+  const specificationLines = Object.entries(variation?.specifications || {})
+    .filter(([key, value]) => key && value)
+    .map(([key, value]) => `*${key}:* ${value}`)
+    .join("\n");
+
   return `Hello! I would like a quotation for:
 
 *Product:* ${productName}
-*Gauge:* ${gauge || "Please advise"}
-*Color:* ${color || "Please advise"}
-*Quantity:* ${quantity || 1} ${quantity && quantity > 1 ? "pieces" : "piece"}
+${variation?.label ? `*Selected Option:* ${variation.label}\n` : ""}*Gauge:* ${gauge || "Please advise"}
+${variation?.sizeLabel ? `*Size / Length:* ${variation.sizeLabel}\n` : ""}*Color:* ${color || "Please advise"}
+*Listed Price:* ${price}
+*Quantity:* ${quantity || 1} ${variation?.unit || (quantity && quantity > 1 ? "pieces" : "piece")}
 *Delivery Location:* ${location || "To be confirmed"}
+${specificationLines ? `\n${specificationLines}` : ""}
 
-Please send me your best price. Thank you!`;
+Please confirm availability and send me your best final quote. Thank you!`;
 };

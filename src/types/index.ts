@@ -53,6 +53,50 @@ export interface ProductImageCreate {
   alt_text?: string;
 }
 
+// ─── Product Variation ────────────────────────────────────────────────────────
+export interface ProductVariation {
+  id: number;
+  product_id: number;
+  name?: string;
+  sku?: string;
+  gauge?: string;
+  size_label?: string;
+  length?: number;
+  width?: number;
+  color?: string;
+  unit: string;
+  price: string;
+  discount_price?: string;
+  effective_price: string;
+  specifications: Record<string, string>;
+  sort_order: number;
+  is_available: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductVariationCreate {
+  name?: string;
+  sku?: string;
+  gauge?: string;
+  size_label?: string;
+  length?: number;
+  width?: number;
+  color?: string;
+  unit: string;
+  price: number;
+  discount_price?: number;
+  specifications?: Record<string, string>;
+  sort_order?: number;
+  is_available?: boolean;
+  is_active?: boolean;
+}
+
+export interface ProductVariationUpsert extends ProductVariationCreate {
+  id?: number;
+}
+
 // ─── Product ──────────────────────────────────────────────────────────────────
 export interface Product {
   id: number;
@@ -80,11 +124,13 @@ export interface Product {
   is_active: boolean;
   image_url?: string;
   images: ProductImage[];
+  variations: ProductVariation[];
   category_id: number;
   category?: Category;
   created_at: string;
   updated_at: string;
 }
+
 export interface ProductCreate {
   name: string;
   slug?: string;
@@ -99,7 +145,8 @@ export interface ProductCreate {
   width?: number;
   color?: string;
   unit?: string;
-  price_from: number;
+  // Optional only when variations are provided; otherwise required by the API.
+  price_from?: number;
   price_to?: number;
   discount_price?: number;
   stock_quantity?: number;
@@ -110,9 +157,13 @@ export interface ProductCreate {
   is_active?: boolean;
   image_url?: string;
   images?: ProductImageCreate[];
+  variations?: ProductVariationCreate[];
   category_id: number;
 }
-export interface ProductUpdate extends Partial<Omit<ProductCreate, "images">> {}
+
+export interface ProductUpdate extends Partial<Omit<ProductCreate, "images" | "variations">> {
+  variations?: ProductVariationUpsert[];
+}
 
 // ─── Site Content ─────────────────────────────────────────────────────────────
 export interface SiteContentOut {
@@ -189,11 +240,24 @@ export interface InventoryAdjust {
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 export type OrderStatus = "pending" | "confirmed" | "processing" | "completed" | "cancelled";
+export interface VariationSnapshot {
+  label: string;
+  sku?: string;
+  gauge?: string;
+  size_label?: string;
+  length?: number;
+  width?: number;
+  color?: string;
+  unit?: string;
+  specifications?: Record<string, string>;
+}
 export interface OrderItem {
   id: number;
   product_id: number;
+  variation_id?: number;
   quantity: number;
   unit_price: string;
+  variation_snapshot?: VariationSnapshot;
 }
 export interface Order {
   id: number;
@@ -207,7 +271,7 @@ export interface Order {
   updated_at: string;
 }
 export interface OrderCreate {
-  items: { product_id: number; quantity: number }[];
+  items: { product_id: number; variation_id?: number; quantity: number }[];
   shipping_address?: string;
   notes?: string;
 }

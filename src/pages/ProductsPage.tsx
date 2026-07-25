@@ -38,6 +38,15 @@ const getImageSrc = (image: unknown): string => {
   return "";
 };
 
+const productGauges = (product: { gauge?: string; variations?: { gauge?: string }[] }) =>
+  [...new Set([product.gauge, ...(product.variations || []).map((variation) => variation.gauge)].filter(Boolean))] as string[];
+
+const productColors = (product: { color?: string; variations?: { color?: string }[] }) =>
+  [...new Set([product.color, ...(product.variations || []).map((variation) => variation.color)].filter(Boolean))] as string[];
+
+const productUnit = (product: { unit?: string; variations?: { unit?: string; is_active?: boolean; is_available?: boolean }[] }) =>
+  product.variations?.find((variation) => variation.is_active !== false && variation.is_available !== false)?.unit || product.unit;
+
 export default function ProductsPage() {
   const { theme } = useTheme();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -64,11 +73,11 @@ export default function ProductsPage() {
 
   // Extract unique values for filters
   const uniqueGauges = useMemo(
-    () => [...new Set(products.map((p) => p.gauge).filter(Boolean))],
+    () => [...new Set(products.flatMap(productGauges))],
     [products]
   );
   const uniqueColors = useMemo(
-    () => [...new Set(products.map((p) => p.color).filter(Boolean))],
+    () => [...new Set(products.flatMap(productColors))],
     [products]
   );
 
@@ -88,13 +97,13 @@ export default function ProductsPage() {
         return false;
       }
 
-      // Gauge
-      if (filters.gauge && product.gauge !== filters.gauge) {
+      // Gauge — match the product default or any individually priced option.
+      if (filters.gauge && !productGauges(product).includes(filters.gauge)) {
         return false;
       }
 
-      // Color
-      if (filters.color && product.color !== filters.color) {
+      // Colour — match the product default or any individually priced option.
+      if (filters.color && !productColors(product).includes(filters.color)) {
         return false;
       }
 
@@ -524,26 +533,23 @@ export default function ProductsPage() {
                       </h3>
 
                       <div className="flex flex-wrap gap-2 mb-4">
-                        {product.gauge && (
-                          <span className={cn(
+                        {productGauges(product).slice(0, 2).map((gauge) => (
+                          <span key={gauge} className={cn(
                             "text-xs font-semibold px-3 py-1 rounded-full",
-                            theme === "dark"
-                              ? "bg-white/10 text-[#4d79ff]"
-                              : "bg-[#2952a3]/10 text-[#2952a3]"
+                            theme === "dark" ? "bg-white/10 text-[#4d79ff]" : "bg-[#2952a3]/10 text-[#2952a3]"
                           )}>
-                            {product.gauge}
+                            {gauge}
                           </span>
-                        )}
-                        {product.color && (
-                          <span className={cn(
+                        ))}
+                        {productGauges(product).length > 2 && <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#f0f3f9] text-[#6b7a9e]">+{productGauges(product).length - 2} gauges</span>}
+                        {productColors(product).slice(0, 1).map((color) => (
+                          <span key={color} className={cn(
                             "text-xs font-semibold px-3 py-1 rounded-full",
-                            theme === "dark"
-                              ? "bg-white/10 text-[#f0c94a]"
-                              : "bg-[#d4a017]/10 text-[#d4a017]"
+                            theme === "dark" ? "bg-white/10 text-[#f0c94a]" : "bg-[#d4a017]/10 text-[#d4a017]"
                           )}>
-                            {product.color}
+                            {color}
                           </span>
-                        )}
+                        ))}
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -553,9 +559,10 @@ export default function ProductsPage() {
                               "text-sm font-semibold",
                               theme === "dark" ? "text-[#8e9bbf]" : "text-[#6b7a9e]"
                             )}>
-                              KES {Number(product.price_from).toLocaleString()}
+                              {product.variations?.length ? "From " : ""}KES {Number(product.price_from).toLocaleString()}{productUnit(product) ? ` / ${productUnit(product)}` : ""}
                             </div>
                           )}
+                          {product.variations?.length ? <div className="text-xs text-[#2952a3] font-semibold mt-1">{product.variations.length} priced option{product.variations.length === 1 ? "" : "s"}</div> : null}
                           {product.stock_quantity > 0 ? (
                             <div className="text-xs text-[#10b981] font-semibold mt-1">
                               In Stock
@@ -619,26 +626,19 @@ export default function ProductsPage() {
                           {product.description}
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {product.gauge && (
-                            <span className={cn(
+                          {productGauges(product).map((gauge) => (
+                            <span key={gauge} className={cn(
                               "text-xs font-semibold px-3 py-1 rounded-full",
-                              theme === "dark"
-                                ? "bg-white/10 text-[#4d79ff]"
-                                : "bg-[#2952a3]/10 text-[#2952a3]"
-                            )}>
-                              {product.gauge}
-                            </span>
-                          )}
-                          {product.color && (
-                            <span className={cn(
+                              theme === "dark" ? "bg-white/10 text-[#4d79ff]" : "bg-[#2952a3]/10 text-[#2952a3]"
+                            )}>{gauge}</span>
+                          ))}
+                          {productColors(product).slice(0, 2).map((color) => (
+                            <span key={color} className={cn(
                               "text-xs font-semibold px-3 py-1 rounded-full",
-                              theme === "dark"
-                                ? "bg-white/10 text-[#f0c94a]"
-                                : "bg-[#d4a017]/10 text-[#d4a017]"
-                            )}>
-                              {product.color}
-                            </span>
-                          )}
+                              theme === "dark" ? "bg-white/10 text-[#f0c94a]" : "bg-[#d4a017]/10 text-[#d4a017]"
+                            )}>{color}</span>
+                          ))}
+                          {product.variations?.length ? <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#eef4ff] text-[#2952a3]">{product.variations.length} options</span> : null}
                         </div>
                       </div>
                     </div>
@@ -651,9 +651,10 @@ export default function ProductsPage() {
                             "text-lg font-bold",
                             theme === "dark" ? "text-white" : "text-[#0a1628]"
                           )}>
-                            KES {Number(product.price_from).toLocaleString()}
+                            {product.variations?.length ? "From " : ""}KES {Number(product.price_from).toLocaleString()}
                           </div>
                         )}
+                        {productUnit(product) && <div className={cn("text-xs mt-0.5", theme === "dark" ? "text-[#8e9bbf]" : "text-[#6b7a9e]")}>per {productUnit(product)}</div>}
                         {product.stock_quantity > 0 ? (
                           <div className="text-xs text-[#10b981] font-semibold mt-1">
                             In Stock
