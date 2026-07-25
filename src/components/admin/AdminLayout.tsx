@@ -29,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/admin/users", label: "Users", icon: <Users size={18} /> },
   { href: "/admin/landing", label: "Homepage", icon: <Home size={18} /> },
   { href: "/admin/site-content", label: "Site Content", icon: <ImageIcon size={18} /> },
+  { href: "/admin/gallery", label: "Gallery", icon: <ImageIcon size={18} /> },
   { href: "/admin/settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 

@@ -18,10 +18,10 @@ import {
   Quote,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { productsApi, bannersApi, siteContentApi } from "../lib/api";
+import { productsApi, bannersApi, siteContentApi, galleryApi } from "../lib/api";
 import { cn } from "../lib/utils";
 import { useTheme } from "../contexts/ThemeContext";
-import type { Product } from "../types";
+import type { Product, GalleryOut } from "../types";
 
 const WHATSAPP = import.meta.env.VITE_WHATSAPP_NUMBER || "254788873611";
 
@@ -65,6 +65,11 @@ export default function HomePage() {
     queryFn: () => siteContentApi.list(),
   });
 
+  const { data: gallery = [] } = useQuery({
+    queryKey: ["gallery"],
+    queryFn: () => galleryApi.list(true),
+  });
+
   const getSiteContentValue = (key: string, defaultValue: any = null) => {
     return siteContent.find(item => item.key === key)?.value || defaultValue;
   };
@@ -104,12 +109,19 @@ export default function HomePage() {
     },
   ]);
 
-  const galleryItems: GalleryItem[] = getSiteContentValue("homepage_gallery", [
-    { id: 1, image_url: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800&h=600&fit=crop", title: "Modern Residential Project" },
-    { id: 2, image_url: "https://images.unsplash.com/photo-1517057013111-01053b2156a6?w=800&h=600&fit=crop", title: "Commercial Building Roofing" },
-    { id: 3, image_url: "https://images.unsplash.com/photo-1542382257-809e69602741?w=800&h=600&fit=crop", title: "Industrial Warehouse Solution" },
-    { id: 4, image_url: "https://images.unsplash.com/photo-1523987355523-c7b0b2871d37?w=800&h=600&fit=crop", title: "Elegant Tile Profile Installation" },
-  ]);
+  const galleryItems: GalleryItem[] = gallery.length > 0 
+    ? gallery.map(item => ({
+        id: item.id,
+        image_url: item.image_url,
+        title: item.title,
+        description: item.description
+      }))
+    : [
+        { id: 1, image_url: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800&h=600&fit=crop", title: "Modern Residential Project" },
+        { id: 2, image_url: "https://images.unsplash.com/photo-1517057013111-01053b2156a6?w=800&h=600&fit=crop", title: "Commercial Building Roofing" },
+        { id: 3, image_url: "https://images.unsplash.com/photo-1542382257-809e69602741?w=800&h=600&fit=crop", title: "Industrial Warehouse Solution" },
+        { id: 4, image_url: "https://images.unsplash.com/photo-1523987355523-c7b0b2871d37?w=800&h=600&fit=crop", title: "Elegant Tile Profile Installation" },
+      ];
 
   const featuredProducts = products.filter(p => p.is_featured).slice(0, 6);
   const bestSellers = products.slice(0, 6); // Assuming best sellers are top 6 products for now

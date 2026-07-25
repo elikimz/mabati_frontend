@@ -20,6 +20,9 @@ import type {
   RegisterData,
   SiteContentOut,
   SiteContentCreate,
+  GalleryOut,
+  GalleryCreate,
+  GalleryUpdate,
   User,
 } from "../types";
 
@@ -212,6 +215,27 @@ export const siteContentApi = {
   },
   delete: async (key: string): Promise<void> => {
     await apiClient.delete(`/site-content/${key}`);
+  },
+};
+
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+export const galleryApi = {
+  list: async (activeOnly = true): Promise<GalleryOut[]> => {
+    const { data } = await apiClient.get<GalleryOut[]>("/gallery", {
+      params: { active_only: activeOnly },
+    });
+    return data;
+  },
+  create: async (payload: GalleryCreate): Promise<GalleryOut> => {
+    const { data } = await apiClient.post<GalleryOut>("/gallery", payload);
+    return data;
+  },
+  update: async (id: number, payload: GalleryUpdate): Promise<GalleryOut> => {
+    const { data } = await apiClient.patch<GalleryOut>(`/gallery/${id}`, payload);
+    return data;
+  },
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/gallery/${id}`);
   },
 };
 

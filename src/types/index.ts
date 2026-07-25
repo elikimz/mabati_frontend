@@ -129,6 +129,30 @@ export interface SiteContentCreate {
   description?: string;
 }
 
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+export interface GalleryOut {
+  id: number;
+  title: string;
+  description?: string;
+  image_url: string;
+  display_order: number;
+  is_active: boolean;
+  category?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GalleryCreate {
+  title: string;
+  description?: string;
+  image_url: string;
+  display_order?: number;
+  is_active?: boolean;
+  category?: string;
+}
+
+export interface GalleryUpdate extends Partial<GalleryCreate> {}
+
 export interface ProductFilters {
   search?: string;
   category_id?: number;
