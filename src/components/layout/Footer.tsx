@@ -169,9 +169,14 @@ export const Footer: React.FC = () => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <MapPin size={16} className="text-[#2952a3] mt-0.5 shrink-0" />
-                <span className={cn("text-sm leading-relaxed", theme === "dark" ? "text-[#6b7a9e]" : "text-[#6b7a9e]")}>
-                  Industrial Area, Nairobi, Kenya
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span className={cn("text-sm leading-relaxed", theme === "dark" ? "text-[#6b7a9e]" : "text-[#6b7a9e]")}>
+                    Nairobi Mabati Shop
+                  </span>
+                  <span className={cn("text-sm leading-relaxed", theme === "dark" ? "text-[#6b7a9e]" : "text-[#6b7a9e]")}>
+                    Mombasa Safal Group
+                  </span>
+                </div>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={16} className="text-[#2952a3] shrink-0" />

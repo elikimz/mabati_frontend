@@ -93,7 +93,7 @@ export default function HomePage() {
   const stats: Stat[] = getSiteContentValue("homepage_stats", [
     { icon: Hammer, value: "1000+", label: "Projects Completed" },
     { icon: Users, value: "500+", label: "Satisfied Clients" },
-    { icon: MapPin, value: "10+", label: "Counties Served" },
+    { icon: MapPin, value: "Nairobi & Mombasa", label: "Our Locations" },
     { icon: Award, value: "20+", label: "Years Experience" },
   ]);
 
