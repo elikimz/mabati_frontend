@@ -98,20 +98,19 @@ export default function ProductsPage() {
         return false;
       }
 
-      // Price range
-      const productPrice = Number(product.price);
-      if (!Number.isFinite(productPrice)) {
-        return false;
-      }
-      if (productPrice < filters.priceRange[0] || productPrice > filters.priceRange[1]) {
-        return false;
+      // Price range — use price_from (the API field)
+      const productPrice = Number(product.price_from);
+      if (Number.isFinite(productPrice)) {
+        if (productPrice < filters.priceRange[0] || productPrice > filters.priceRange[1]) {
+          return false;
+        }
       }
 
-      // In stock
-      if (filters.inStock === true && product.stock === 0) {
+      // In stock — use stock_quantity (the API field)
+      if (filters.inStock === true && product.stock_quantity === 0) {
         return false;
       }
-      if (filters.inStock === false && product.stock > 0) {
+      if (filters.inStock === false && product.stock_quantity > 0) {
         return false;
       }
 
@@ -549,15 +548,15 @@ export default function ProductsPage() {
 
                       <div className="flex items-center justify-between">
                         <div>
-                          {product.price && (
+                          {product.price_from && (
                             <div className={cn(
                               "text-sm font-semibold",
                               theme === "dark" ? "text-[#8e9bbf]" : "text-[#6b7a9e]"
                             )}>
-                              KES {product.price.toLocaleString()}
+                              KES {Number(product.price_from).toLocaleString()}
                             </div>
                           )}
-                          {product.stock > 0 ? (
+                          {product.stock_quantity > 0 ? (
                             <div className="text-xs text-[#10b981] font-semibold mt-1">
                               In Stock
                             </div>
@@ -647,15 +646,15 @@ export default function ProductsPage() {
                     {/* Right side */}
                     <div className="flex flex-col items-end justify-between">
                       <div className="text-right">
-                        {product.price && (
+                        {product.price_from && (
                           <div className={cn(
                             "text-lg font-bold",
                             theme === "dark" ? "text-white" : "text-[#0a1628]"
                           )}>
-                            KES {product.price.toLocaleString()}
+                            KES {Number(product.price_from).toLocaleString()}
                           </div>
                         )}
-                        {product.stock > 0 ? (
+                        {product.stock_quantity > 0 ? (
                           <div className="text-xs text-[#10b981] font-semibold mt-1">
                             In Stock
                           </div>

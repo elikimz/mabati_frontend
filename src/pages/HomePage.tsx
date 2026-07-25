@@ -288,7 +288,7 @@ export default function HomePage() {
                 <div className="relative h-64 overflow-hidden bg-gradient-to-br from-[#2952a3] to-[#152b55]">
                   {product.images && product.images.length > 0 ? (
                     <img
-                      src={typeof product.images[0] === "string" ? product.images[0] : (product.images[0] as any)?.url || ""}
+                      src={product.images[0]?.image_url || product.image_url || ""}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
@@ -339,15 +339,15 @@ export default function HomePage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      {product.price && (
+                      {product.price_from && (
                         <div className={cn(
                           "text-sm font-semibold",
                           theme === "dark" ? "text-[#8e9bbf]" : "text-[#6b7a9e]"
                         )}>
-                          From KES {product.price.toLocaleString()}
+                          From KES {Number(product.price_from).toLocaleString()}
                         </div>
                       )}
-                      {product.stock > 0 ? (
+                      {product.stock_quantity > 0 ? (
                         <div className="text-xs text-[#10b981] font-semibold mt-1">
                           In Stock
                         </div>
