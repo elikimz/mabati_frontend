@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
   const { theme } = useTheme();
 
   return (
-    <footer className={cn(theme === "dark" ? "bg-[#050d1a] text-white" : "bg-white text-[#0a1628]")}>
+    <footer aria-label="Site footer" className={cn(theme === "dark" ? "bg-[#050d1a] text-white" : "bg-white text-[#0a1628]")}>
       {/* CTA Strip */}
       <div className={cn(
         "py-14",

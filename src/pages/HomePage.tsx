@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import SEOHead from "../components/seo/SEOHead";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -196,6 +197,12 @@ export default function HomePage() {
   };
 
   return (
+    <>
+    <SEOHead
+      title="MRM Mabati Rolling Mills — Premium Roofing Materials in Kenya"
+      description="Kenya's leading supplier of premium roofing materials. Box profile, corrugated, tile profile, and stone-coated mabati sheets. Quality roofing solutions for residential and commercial projects. Get a free quote today."
+      canonicalUrl="/"
+    />
     <div className={cn(theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
       {/* ═══════════════════════════════════════════════════════════════════
           PREMIUM HERO SECTION
@@ -527,5 +534,6 @@ export default function HomePage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

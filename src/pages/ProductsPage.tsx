@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import SEOHead from "../components/seo/SEOHead";
 import {
   Search,
   Filter,
@@ -128,6 +129,12 @@ export default function ProductsPage() {
   }, [products, filters]);
 
   return (
+    <>
+    <SEOHead
+      title="Roofing Materials Catalog — Box Profile, Corrugated, Tile & Stone Coated"
+      description="Browse our full catalog of premium roofing materials. Box profile, corrugated, tile profile, and stone-coated mabati sheets in all gauges and colors. Get a free quote from MRM Mabati Rolling Mills."
+      canonicalUrl="/products"
+    />
     <div className={cn(theme === "dark" ? "bg-[#050d1a]" : "bg-white")}>
       {/* Hero Section */}
       <section className={cn(
@@ -704,5 +711,6 @@ export default function ProductsPage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import SEOHead from "../components/seo/SEOHead";
 import {
   ArrowRight,
   Award,
@@ -69,6 +70,12 @@ const AboutPage: React.FC = () => {
   ];
 
   return (
+    <>
+    <SEOHead
+      title="About MRM Mabati Rolling Mills — Kenya's Leading Roofing Supplier"
+      description="Learn about MRM Mabati Rolling Mills — Kenya's leading supplier of premium roofing materials with over 20 years of experience. ISO certified, nationwide delivery across Kenya."
+      canonicalUrl="/about"
+    />
     <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="relative bg-[#0a1628] overflow-hidden">
@@ -300,6 +307,7 @@ const AboutPage: React.FC = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

@@ -1,0 +1,21 @@
+{
+  "name": "MRM Mabati Rolling Mills",
+  "short_name": "MRM Mabati",
+  "description": "Kenya's leading supplier of premium roofing materials. Box profile, corrugated, tile profile, and stone-coated mabati sheets.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#2952a3",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "shopping"],
+  "lang": "en",
+  "dir": "ltr"
+}

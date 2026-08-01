@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import SEOHead from "../components/seo/SEOHead";
 import {
   Clock,
   Mail,
@@ -81,6 +82,21 @@ ${form.message}`;
   ];
 
   return (
+    <>
+    <SEOHead
+      title="Contact MRM Mabati Rolling Mills — Get a Free Roofing Quote"
+      description="Contact MRM Mabati Rolling Mills for a free quote on premium roofing materials. WhatsApp us, call us, or visit our offices in Nairobi. Fast delivery across all 47 counties in Kenya."
+      canonicalUrl="/contact"
+      jsonLd={{
+        "@type": "ContactPage",
+        "mainEntity": {
+          "@type": "RoofingContractor",
+          "name": "MRM Mabati Rolling Mills",
+          "telephone": "+254788873611",
+          "address": { "@type": "PostalAddress", "addressLocality": "Nairobi", "addressCountry": "KE" },
+        },
+      }}
+    />
     <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="bg-[#0a1628] relative overflow-hidden">
@@ -330,8 +346,8 @@ ${form.message}`;
           </div>
         </div>
       </section>
-    </div>
+        </div>
+    </>
   );
 };
-
 export default ContactPage;
