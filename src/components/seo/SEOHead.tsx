@@ -30,27 +30,12 @@ export default function SEOHead({
   const fullTitle = `${title} | ${SITE_NAME}`;
   const canonical = canonicalUrl ? `${BASE_URL}${canonicalUrl}` : undefined;
 
-  // Build JSON-LD script tags
-  const jsonLdScripts = jsonLd
+  // Build JSON-LD strings for script tags
+  const jsonLdStrings: string[] = jsonLd
     ? Array.isArray(jsonLd)
-      ? jsonLd.map((schema, i) => ({
-          type: "application/ld+json" as const,
-          innerHTML: JSON.stringify({
-            "@context": "https://schema.org",
-            ...schema,
-          }),
-          key: `jsonld-${i}`,
-        }))
-      : [
-          {
-            type: "application/ld+json" as const,
-            innerHTML: JSON.stringify({
-              "@context": "https://schema.org",
-              ...jsonLd,
-            }),
-          },
-        ]
-    : undefined;
+      ? jsonLd.map((schema) => JSON.stringify({ "@context": "https://schema.org", ...schema }))
+      : [JSON.stringify({ "@context": "https://schema.org", ...jsonLd })]
+    : [];
 
   return (
     <Helmet>
@@ -76,9 +61,11 @@ export default function SEOHead({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage || DEFAULT_IMAGE} />
 
-      {/* JSON-LD structured data */}
-      {jsonLdScripts?.map((script) => (
-        <script type={script.type} key={script.key || "jsonld"} innerHTML={script.innerHTML} />
+      {/* JSON-LD structured data — rendered as inline script children (Helmet supports children for script) */}
+      {jsonLdStrings.map((ld, i) => (
+        <script key={`jsonld-${i}`} type="application/ld+json">
+          {ld}
+        </script>
       ))}
     </Helmet>
   );
