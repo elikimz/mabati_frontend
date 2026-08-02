@@ -211,7 +211,7 @@ export const Footer: React.FC = () => {
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-[#2952a3] shrink-0" />
                 <a
-                  href="mailto:info@mrmmabati.co.ke"
+                  href="mailto:info@mrmkenyarollingmills.online"
                   className={cn(
                     "text-sm transition-colors",
                     theme === "dark"
@@ -219,7 +219,7 @@ export const Footer: React.FC = () => {
                       : "text-[#6b7a9e] hover:text-[#0a1628]"
                   )}
                 >
-                  info@mrmmabati.co.ke
+                  info@mrmkenyarollingmills.online
                 </a>
               </li>
             </ul>
