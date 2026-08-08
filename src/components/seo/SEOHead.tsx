@@ -14,7 +14,7 @@ interface SEOHeadProps {
   noIndex?: boolean;
 }
 
-const BASE_URL = "https://www.mrmkenyarollingmills.online";
+const BASE_URL = "https://mrmkenya.online";
 const DEFAULT_IMAGE = `${BASE_URL}/og-image.png`;
 const SITE_NAME = "MRM Mabati Rolling Mills";
 

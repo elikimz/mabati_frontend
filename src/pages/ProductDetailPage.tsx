@@ -175,7 +175,7 @@ const ProductDetailPage: React.FC = () => {
       "priceCurrency": "KES",
       "price": String(Number(product.price_from || 0)),
       "availability": product.stock_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "url": `https://www.mrmkenyarollingmills.online/products/${product.slug || product.id}`,
+      "url": `https://mrmkenya.online/products/${product.slug || product.id}`,
       "seller": {
         "@type": "Organization",
         "name": "MRM Mabati Rolling Mills",

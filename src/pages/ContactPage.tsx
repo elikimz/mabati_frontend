@@ -62,9 +62,9 @@ ${form.message}`;
     {
       icon: <Mail size={24} />,
       title: "Email",
-      value: "info@mrmkenyarollingmills.online",
+      value: "info@mrmkenya.online",
       sub: "Response within 24hrs",
-      href: "mailto:info@mrmkenyarollingmills.online",
+      href: "mailto:info@mrmkenya.online",
       color: "bg-[#d4a017]",
       bg: "bg-[#d4a017]/10",
       text: "text-[#d4a017]",
